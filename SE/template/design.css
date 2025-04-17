@@ -1,0 +1,65 @@
+html, body{
+    height: 100%;
+    background-color: white;
+}
+
+body{
+    margin: 0;
+}
+
+.whole{
+    display:grid;
+    grid-template-rows: 3fr 6fr;
+    height: 100vh;
+}
+
+.top{
+    background: linear-gradient(to bottom right, #3BA8E9, #0F0D56);
+    height: 70px;
+}
+
+.body{
+    position: relative;
+    height: 100vh;
+}
+
+.upper-body, .lower-body{
+    height: 50%;
+}
+
+.upper-body{
+    height: 400px;
+}
+.lower-body{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+.left-body, .right-body{
+    position: absolute;
+    height: 100%;
+    top: 0;
+    border-top-right-radius: 250px;
+}
+
+.left-body{
+    background: linear-gradient(to bottom right, #FFFFFF, #3BA8E9, #193198);
+    left: 0;
+    z-index: 2;
+    width: 50%;
+}
+
+.right-body{
+    background-color: white;
+    left: 25%;
+    z-index: 1;
+    width: 75%;
+}
+
+td{
+    border-radius: 100px;
+    background-color: #CDE1EF;
+    width: 350px;
+    height: 50px;
+}
+
