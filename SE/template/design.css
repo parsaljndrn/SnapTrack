@@ -28,13 +28,12 @@ body{
 }
 
 .upper-body{
-    height: 400px;
+    height: 315px;
 }
 .lower-body{
     display: grid;
     grid-template-columns: 1fr 1fr;
 }
-
 .left-body, .right-body{
     position: absolute;
     height: 100%;
@@ -62,4 +61,3 @@ td{
     width: 350px;
     height: 50px;
 }
-
