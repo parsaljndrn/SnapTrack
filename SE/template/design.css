@@ -32,8 +32,13 @@ body{
 }
 .lower-body{
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 3fr;
 }
+
+.lower-body-left{
+    width: 450px;
+}
+
 .left-body, .right-body{
     position: absolute;
     height: 100%;
