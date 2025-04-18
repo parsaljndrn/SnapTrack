@@ -16,6 +16,10 @@ body{
 .top{
     background: linear-gradient(to bottom right, #3BA8E9, #0F0D56);
     height: 70px;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 25px;
 }
 
 .body{
@@ -65,4 +69,9 @@ td{
     background-color: #CDE1EF;
     width: 350px;
     height: 50px;
+}
+
+.design{
+    margin-top: 5px; 
+    margin-left: 0;
 }
