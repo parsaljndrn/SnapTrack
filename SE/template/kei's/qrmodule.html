@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SnapTrack QR Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f6fc;
+    }
+
+    header {
+      background: linear-gradient(to right, #1a75cf, #0a1e52);
+      color: white;
+      padding: 25px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      height: 130px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 45px;
+      font-weight: bold;
+    }
+
+    .logo-icon {
+      width: 50px;
+      height: 50px;
+      margin-right: 10px;
+      background: white;
+      border-radius: 8px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 30px;
+      font-size: 16px;
+    }
+
+    .nav-buttons a {
+      text-decoration: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+      font-size: 24px;
+    }
+
+    .main-content {
+      display: flex;
+      justify-content: center; /* Horizontally center the cards */
+      align-items: center;     /* Vertically center the cards */
+      height: calc(100vh - 130px); /* Adjust to account for header */
+      gap: 80px;
+      background: #f0f6fc;
+      position: relative;
+    }
+
+    .card {
+      width: 700px;
+      height: 730px;
+      background-color: #eaf3fb;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .card img {
+      width: 500px;
+      height: 500px;
+      margin-bottom: 50px;
+    }
+
+    .card span {
+      font-size: 50px;
+      font-weight: bold;
+      color: #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon"></div>
+      SNAPTRACK
+    </div>
+    <div class="nav-buttons">
+      <a href="reportmodule.html"><img src="reportlogo.png" style="height: 50px; width: 50px;"> REPORT</a>
+      <a href="qrmodule.html"><img src="qrlogo.png" style="height: 50px; width: 50px;"> QR</a>
+    </div>
+  </header>
+
+  <!-- Main content that wraps both cards -->
+  <div class="main-content">
+    <div class="card" onclick="location.href='scanqr.html'">
+      <img src="scanqr.png" alt="Scan" />
+      <span>SCAN ATTENDANCE</span>
+    </div>
+
+    <div class="card" onclick="location.href='generateqr.html'">
+      <img src="generateqr.png" alt="Generate" />
+      <span>GENERATE QR CODE</span>
+    </div>
+  </div>
+
+</body>
+</html>
+
+

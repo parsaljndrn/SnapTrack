@@ -1,6 +1,7 @@
 html, body{
     height: 100%;
     background-color: white;
+    font-family: 'Segoe UI', sans-serif;
 }
 
 body{
@@ -21,7 +22,18 @@ body{
     align-items: center; 
     padding: 0 25px;
 }
-
+.top-dash{
+    background: linear-gradient(to bottom right, #3BA8E9, #0F0D56);
+    height: 100px; 
+    display: grid; 
+    grid-template-columns: 5fr 1fr 1fr;
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 25px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+}
 .body{
     position: relative;
     height: 100vh;
