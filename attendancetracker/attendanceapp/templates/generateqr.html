@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnapTrack QR Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f6fc;
+    }
+
+    header {
+      background: linear-gradient(to right, #1a75cf, #0a1e52);
+      color: white;
+      padding: 25px 60px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 90px; 
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 28px; 
+      font-weight: bold;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+      background: white;
+      border-radius: 8px;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 30px;
+      font-size: 16px;
+    }
+
+    .nav-buttons a {
+      text-decoration: none;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: bold;
+    }
+
+    .main-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      height: calc(100vh - 90px); 
+      background: #f0f6fc;
+      position: relative;
+    }
+
+    .qr-text {
+      font-size: 38px;
+      font-weight: bold;
+      color: #1a1a1a;
+      margin-bottom: 20px; 
+      text-align: center; 
+    }
+
+    .qr-box {
+      width: 700px; 
+      height: 700px; 
+      border: 4px solid #00bcd4;  
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #eaf3fb; 
+      border-radius: 15px;  
+      z-index: 1;
+    }
+
+    .qr-code {
+      width: 700px;
+      height: 700px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon"></div>
+      SNAPTRACK
+    </div>
+    <div class="nav-buttons">
+      <a href="reportmodule.html"><img src="reportlogo.png" style="height: 35px; width: 35px;"> REPORT</a>
+      <a href="qrmodule.html"><img src="qrlogo.png" style="height: 35px; width: 35px;"> QR</a>
+    </div>
+  </header>
+
+  <div class="main-content">
+    <div class="qr-text">
+      GENERATED QR CODE
+    </div>
+
+    <div class="qr-box">
+      <img src="sampleqr.png" alt="Generated QR Code" class="qr-code" />
+    </div>
+  </div>
+
+</body>
+</html>
