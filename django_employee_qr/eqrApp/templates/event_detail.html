@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="event-detail">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-calendar-day me-2"></i>
+            {{ event.name }} - {{ event.date }}
+        </h2>
+        <div>
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+            <a href="{% url 'generate_qr_all' event.pk %}" class="btn btn-primary ms-2">
+                <i class="fas fa-qrcode"></i> Generate All QR Codes
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-camera me-2"></i>QR Scanner</h5>
+                </div>
+                <div class="card-body text-center">
+                    <button id="startScanner" class="btn btn-primary mb-3">
+                        <i class="fas fa-play"></i> Start Scanner
+                    </button>
+                    <div id="scanner-container" class="mb-3" style="display:none;">
+                        <video id="scanner" width="100%" class="rounded border"></video>
+                    </div>
+                    <p class="text-muted small">Point the camera at a member's QR code to register attendance</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-list-check me-2"></i>Attendance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Member ID</th>
+                                    <th>Name</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in attendances %}
+                                <tr>
+                                    <td>{{ attendance.member.member_id }}</td>
+                                    <td>{{ attendance.member.get_full_name }}</td>
+                                    <td>{{ attendance.timestamp|date:"H:i" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-3 text-muted">
+                                        No attendance recorded yet
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+<script>
+// QR Scanner implementation here
+</script>
+{% endblock %}
