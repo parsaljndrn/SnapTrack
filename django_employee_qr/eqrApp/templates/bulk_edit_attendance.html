@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-users-gear me-2"></i>
+            Edit Attendance - {{ event.name }}
+        </h2>
+        <div>
+            <a href="{% url 'event_detail' event.id %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-edit me-2"></i>Edit Attendance Status
+            </h5>
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-success me-2" id="setAllPresent">
+                    <i class="fas fa-check"></i> Mark All Present
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" id="setAllAbsent">
+                    <i class="fas fa-times"></i> Mark All Absent
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <form id="bulkAttendanceForm" method="post" action="{% url 'save_bulk_attendance' event.id %}">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Section</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>{{ member.get_full_name }}</td>
+                                <td>{{ member.section|default:"-" }}</td>
+                                <td>
+                                    <div class="d-flex justify-content-center">
+                                        <div class="btn-group" role="group">
+                                            <input type="radio" class="btn-check" name="status_{{ member.member_id }}" 
+                                                   id="present_{{ member.member_id }}" value="present"
+                                                   {% if member.attendance_status == 'present' %}checked{% endif %}>
+                                            <label class="btn btn-outline-success btn-sm" for="present_{{ member.member_id }}">
+                                                Present
+                                            </label>
+                                            
+                                            <input type="radio" class="btn-check" name="status_{{ member.member_id }}"
+                                                   id="late_{{ member.member_id }}" value="late"
+                                                   {% if member.attendance_status == 'late' %}checked{% endif %}>
+                                            <label class="btn btn-outline-warning btn-sm" for="late_{{ member.member_id }}">
+                                                Late
+                                            </label>
+                                            
+                                            <input type="radio" class="btn-check" name="status_{{ member.member_id }}"
+                                                   id="absent_{{ member.member_id }}" value="absent"
+                                                   {% if member.attendance_status == 'absent' %}checked{% endif %}>
+                                            <label class="btn btn-outline-danger btn-sm" for="absent_{{ member.member_id }}">
+                                                Absent
+                                            </label>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">
+                                    No attendees found. <a href="{% url 'add_member' %}">Add your first attendee</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('setAllPresent').addEventListener('click', function() {
+        document.querySelectorAll('input[id^="present_"]').forEach(radio => {
+            radio.checked = true;
+        });
+    });
+    
+    document.getElementById('setAllAbsent').addEventListener('click', function() {
+        document.querySelectorAll('input[id^="absent_"]').forEach(radio => {
+            radio.checked = true;
+        });
+    });
+});
+</script>
+{% endblock %}

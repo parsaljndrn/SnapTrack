@@ -18,7 +18,6 @@ urlpatterns = [
     path('events/', views.event_list, name='event_list'),  
     path('events/create/', views.create_event, name='create_event'),
     path('events/<int:pk>/', views.event_detail, name='event_detail'),
-    path('events/<int:attendance_id>/edit/', views.edit_manually, name='edit_manually'),
-    path('qr/<str:member_id>/', views.generate_qr, name='generate_qr'),
-    path('events/<int:event_id>/qr/all/', views.generate_all_qr, name='generate_qr_all'),
+    path('events/<int:event_id>/bulk-edit-attendance/', views.bulk_edit_attendance, name='bulk_edit_attendance'),
+    path('events/<int:event_id>/save-bulk-attendance/', views.save_bulk_attendance, name='save_bulk_attendance'),
 ]

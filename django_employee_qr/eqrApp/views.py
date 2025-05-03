@@ -59,10 +59,21 @@ def create_event(request):
     })
 
 @login_required
-@require_http_methods(["GET", "POST"])
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)
-    attendances = Attendance.objects.filter(event=event).select_related('member').order_by('-timestamp')
+    attendances = Attendance.objects.filter(
+        event=event, 
+        status__in=['present', 'late']
+    ).select_related('member').order_by('-timestamp')
+    
+    total_members = Member.objects.count()
+    present_count = Attendance.objects.filter(event=event, status='present').count()
+    late_count = Attendance.objects.filter(event=event, status='late').count()
+    absent_count = total_members - present_count - late_count
+    
+    present_percentage = round((present_count / total_members) * 100) if total_members > 0 else 0
+    late_percentage = round((late_count / total_members) * 100) if total_members > 0 else 0
+    absent_percentage = round((absent_count / total_members) * 100) if total_members > 0 else 0
     
     if request.method == 'POST':
         scan_data = request.POST.get('scan_data', '').strip()
@@ -74,12 +85,15 @@ def event_detail(request, pk):
             member = Member.objects.get(member_id=member_id)
             attendance, created = Attendance.objects.get_or_create(
                 event=event,
-                member=member
+                member=member,
+                defaults={'status': 'present'} 
             )
-            if created:
-                messages.success(request, f'{member} marked as present!')
+            if not created:
+                attendance.status = 'present'
+                attendance.save()
+                messages.info(request, f'{member.get_full_name()} marked as present!')
             else:
-                messages.info(request, f'{member} already attended')
+                messages.success(request, f'{member.get_full_name()} marked as present!')
         except Member.DoesNotExist:
             messages.error(request, f'Member ID {member_id} not found!')
         return redirect('event_detail', pk=event.pk)
@@ -87,7 +101,14 @@ def event_detail(request, pk):
     return render(request, 'event_detail.html', {
         'event': event,
         'attendances': attendances,
-        'page_title': f'{event.name} Details'
+        'page_title': f'{event.name} Details',
+        'present_count': present_count,
+        'late_count': late_count,
+        'absent_count': absent_count,
+        'total_members': total_members,
+        'present_percentage': present_percentage,
+        'late_percentage': late_percentage,
+        'absent_percentage': absent_percentage,
     })
 
 @login_required
@@ -252,22 +273,47 @@ def event_list(request):
     })
 
 @login_required
-def edit_manually(request, pk):
-    attendance = get_object_or_404(Attendance, pk=pk)
-    if request.method == 'POST':
-        form = AttendanceForm(request.POST, instance=attendance)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Attendance record updated manually!")
-            return redirect('eqrApp:event_detail', pk=attendance.event.pk)
-    else:
-        form = AttendanceForm(instance=attendance)
+def bulk_edit_attendance(request, event_id):
+    event = get_object_or_404(Event, pk=event_id)
     
-    return render(request, 'eqrApp/edit_manually.html', {
-        'form': form,
-        'object': attendance  # Using 'object' instead of 'attendance' for template
+    # Get all members and their attendance status for this event
+    members = Member.objects.all().order_by('last_name', 'first_name')
+    
+    # Get existing attendance records for this event
+    attendances = {
+        attendance.member_id: attendance.status 
+        for attendance in Attendance.objects.filter(event=event)
+    }
+    
+    # Add attendance status to each member
+    for member in members:
+        member.attendance_status = attendances.get(member.id, 'absent')
+    
+    return render(request, 'bulk_edit_attendance.html', {
+        'event': event,
+        'members': members,
+        'page_title': f'Edit Attendance - {event.name}'
     })
 
-# def attendance_chart(request, event_id):
-#     event = get_object_or_404(Event, pk=event_id)
-#     attendance_data = Attendance.objects.filter(event=event).values('member__section').annotate(count=Count('id'))
+@login_required
+@require_http_methods(["POST"])
+def save_bulk_attendance(request, event_id):
+    event = get_object_or_404(Event, pk=event_id)
+    members = Member.objects.all()
+    count_updated = 0
+    
+    for member in members:
+        status_key = f'status_{member.member_id}'
+        if status_key in request.POST:
+            status = request.POST.get(status_key)
+
+            if status in ['present', 'absent', 'late']:
+                attendance, created = Attendance.objects.update_or_create(
+                    event=event,
+                    member=member,
+                    defaults={'status': status}
+                )
+                count_updated += 1
+    
+    messages.success(request, f'Successfully updated attendance for {count_updated} members!')
+    return redirect('event_detail', pk=event_id)

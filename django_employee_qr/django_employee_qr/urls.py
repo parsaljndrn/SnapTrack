@@ -18,8 +18,9 @@ urlpatterns = [
     path('members/mass-delete/', views.mass_delete_members, name='mass_delete_members'),
     path('events/create/', views.create_event, name='create_event'),
     path('events/<int:pk>/', views.event_detail, name='event_detail'),
-    path('qr/<str:member_id>/', views.generate_qr, name='generate_qr'),
-    path('events/<int:event_id>/qr/all/', views.generate_all_qr, name='generate_qr_all'),
+    path('events/<int:event_id>/bulk-edit-attendance/', views.bulk_edit_attendance, name='bulk_edit_attendance'),
+    path('events/<int:event_id>/save-bulk-attendance/', views.save_bulk_attendance, name='save_bulk_attendance'),
+    
     
     # Include auth URLs for password reset etc.
     path('accounts/', include('django.contrib.auth.urls')),

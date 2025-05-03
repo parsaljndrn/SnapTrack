@@ -42,7 +42,14 @@ class Attendance(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(choices=[('present', 'Present'), ('absent', 'Absent')], default='absent')
+    status = models.CharField(
+        choices=[
+            ('present', 'Present'),
+            ('absent', 'Absent'),
+            ('late', 'Late')
+        ],
+        default='absent'
+    )
     
     class Meta:
         unique_together = ('event', 'member')

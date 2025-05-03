@@ -53,13 +53,14 @@ class AttendanceForm(forms.ModelForm):
         choices=[
             ('present', 'Present'),
             ('absent', 'Absent'),
+            ('late', 'Late'),
         ],
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
     class Meta:
         model = Attendance
-        fields = ['event', 'member', 'status']
+        fields = ['status']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control'})
         }
