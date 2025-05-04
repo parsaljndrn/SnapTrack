@@ -9,6 +9,7 @@
         </div>
     </div>
 
+    <!-- Original Dashboard Cards -->
     <div class="row">
         <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm">
@@ -58,7 +59,7 @@
                         {% for event in recent_events %}
                         <a href="{% url 'eqrApp:event_detail' event.pk %}" class="list-group-item list-group-item-action">
                             <i class="fas fa-calendar-day me-2"></i>
-                            {{ event.name }} - {{ event.date }}
+                            {{ event.name }} - {{ event.date|date:"M d, Y" }}
                         </a>
                         {% empty %}
                         <div class="list-group-item text-muted">No recent events</div>
@@ -68,5 +69,82 @@
             </div>
         </div>
     </div>
+
+    <!-- Event Attendance Section (Below Members/Events) -->
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-primary">  <!-- Added border-primary -->
+            <div class="card-header bg-primary text-white">  <!-- Changed to primary color -->
+                <h4 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Event Attendance</h4>
+            </div>
+            <div class="card-body">
+                <select class="form-select mb-3" id="eventSelect">
+                    <option value="">Select an event...</option>
+                    {% for event in events %}
+                    <option value="{{ event.id }}">{{ event.name }} - {{ event.date|date:"M d, Y" }}</option>
+                    {% endfor %}
+                </select>
+                
+                <div id="attendanceSummary" style="display:none;">
+                    <h5 class="mb-3 text-center" id="selectedEventTitle"></h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center" style="background-color: #f8f9fa;">  <!-- Added light background -->
+                            <thead class="table-primary">  <!-- Changed to primary color -->
+                                <tr>
+                                    <th class="py-3">Present</th>  <!-- Added padding -->
+                                    <th class="py-3">Late</th>
+                                    <th class="py-3">Absent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-success fw-bold fs-4 py-3" id="presentCount">0</td>  <!-- Increased font size -->
+                                    <td class="text-warning fw-bold fs-4 py-3" id="lateCount">0</td>
+                                    <td class="text-danger fw-bold fs-4 py-3" id="absentCount">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eventSelect = document.getElementById('eventSelect');
+    const attendanceSummary = document.getElementById('attendanceSummary');
+    const selectedEventTitle = document.getElementById('selectedEventTitle');
+    
+    eventSelect.addEventListener('change', function() {
+        const eventId = this.value;
+        const selectedOption = eventSelect.options[eventSelect.selectedIndex];
+        
+        if (eventId) {
+            // Show loading state
+            selectedEventTitle.textContent = "Loading...";
+            attendanceSummary.style.display = 'block';
+            
+            // Fetch attendance data
+            fetch(`/api/events/${eventId}/attendance/`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('presentCount').textContent = data.present;
+                    document.getElementById('lateCount').textContent = data.late;
+                    document.getElementById('absentCount').textContent = data.absent;
+                    selectedEventTitle.textContent = selectedOption.text;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    selectedEventTitle.textContent = "Error loading data";
+                });
+        } else {
+            attendanceSummary.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}
 {% endblock %}

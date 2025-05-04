@@ -32,6 +32,7 @@ def home(request):
         'recent_events': Event.objects.order_by('-date')[:5],
         'recent_attendances': Attendance.objects.select_related('member', 'event')
                               .order_by('-timestamp')[:10],
+        'events': Event.objects.order_by('-date')  # Add all events for the dropdown
     }
     return render(request, 'home.html', context)
 
@@ -256,7 +257,33 @@ def manage_member(request, member_id=None):
         'action': action,
         'page_title': f'{action} Member'
     })
+from django.views.decorators.http import require_http_methods
 
+@require_http_methods(["GET"])
+def get_member(request, member_id):
+    member = get_object_or_404(Member, member_id=member_id)
+    return JsonResponse({
+        'member_id': member.member_id,
+        'first_name': member.first_name,
+        'last_name': member.last_name,
+        'email': member.email,
+        'section': member.section
+    })
+
+@require_http_methods(["POST"])
+def update_member(request, member_id):
+    member = get_object_or_404(Member, member_id=member_id)
+    form = MemberForm(request.POST, instance=member)
+    
+    if form.is_valid():
+        try:
+            member = form.save()
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    else:
+        return JsonResponse({'success': False, 'error': form.errors.as_json()})
+    
 @login_required
 @require_http_methods(["POST"])
 def delete_member(request, member_id):
@@ -317,3 +344,19 @@ def save_bulk_attendance(request, event_id):
     
     messages.success(request, f'Successfully updated attendance for {count_updated} members!')
     return redirect('event_detail', pk=event_id)
+
+@login_required
+def event_attendance_stats(request, event_id):
+    event = get_object_or_404(Event, pk=event_id)
+    total_members = Member.objects.count()
+    
+    data = {
+        'present': Attendance.objects.filter(event=event, status='present').count(),
+        'late': Attendance.objects.filter(event=event, status='late').count(),
+        'absent': total_members - Attendance.objects.filter(
+            event=event, 
+            status__in=['present', 'late']
+        ).count()
+    }
+    
+    return JsonResponse(data)

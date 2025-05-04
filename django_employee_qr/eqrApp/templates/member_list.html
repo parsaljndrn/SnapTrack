@@ -29,6 +29,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Section</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -42,10 +43,15 @@
                                 <td>{{ member.get_full_name }}</td>
                                 <td>{{ member.email|default:"-" }}</td>
                                 <td>{{ member.section|default:"-" }}</td>
+                                <td>
+                                    <a href="{% url 'eqrApp:manage_member' member.member_id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">
+                                <td colspan="6" class="text-center py-4 text-muted">
                                     No members found. <a href="{% url 'add_member' %}">Add your first member</a>
                                 </td>
                             </tr>
@@ -60,7 +66,6 @@
 {% endblock %}
 
 {% block extra_js %}
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const selectAll = document.getElementById('selectAll');
