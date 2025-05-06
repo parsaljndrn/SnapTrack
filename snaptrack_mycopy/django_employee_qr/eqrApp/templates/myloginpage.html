@@ -1,0 +1,43 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SnapTrack</title>
+        <link href="{% static 'css/design.css' %}" rel="stylesheet">
+        <script>
+            function slidelogo() {
+                document.getElementById('logo').classList.toggle('slide');
+                document.getElementById('logo-img').classList.toggle('slide');
+            }
+        </script>
+    </head>
+    <body class="login-body">
+        <div class="login-box">
+            <div class="logo" id="logo">
+                <img class="logo-img" id="logo-img" src="{% static 'images/logo-vertical.jpg' %}" width="200" height="200">
+                <input class="btnlogin" type="button" value="Login" onclick="slidelogo()">
+            </div>
+            <div class="login">
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        Invalid username or password. Please try again.
+                    </div>
+                {% endif %}
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <div class="login-username">
+                        <input type="text" name="username" class="form-control" placeholder="👤 Username" id="id_username" required autofocus>
+                    </div>
+                    <div class="login-password">
+                        <input type="password" name="password" class="form-control" placeholder="🔒 Password" id="id_password" required>
+                    </div>
+                    <input type="hidden" name="next" value="{{ next }}">
+                    <div class="d-grid">
+                        <button type="submit" class="btn-lg">Sign In</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>

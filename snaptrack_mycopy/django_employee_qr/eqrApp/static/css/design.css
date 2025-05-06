@@ -1,0 +1,188 @@
+html, body{
+    height: 100%;
+    margin: 0;
+    font-family: 'Inter';
+}
+
+/* base.html */
+.navbar{
+    background: linear-gradient(to bottom right, #3BA8E9, #0F0D56);
+    height: 100px; 
+    display: grid; 
+    grid-template-columns: 7fr 1fr 1fr 1fr 1fr;
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 25px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+    color: white;
+}
+
+.navbar-logo{
+    position: absolute;
+}
+
+.navbar-brand, .nav-link{
+    color: white;
+}
+
+.homelogo{
+    display: flex; 
+    align-items: right; 
+    justify-content: left;
+}
+.membersbtn{
+    display: flex; 
+    align-items: right; 
+    justify-content: center;
+}
+
+.btn-outline-light{
+    border-radius: 5px;
+    background-color: white;
+    border: none;
+    width: 80px;
+    height: 20px;
+}
+
+.homie{display: flex; align-items: right; justify-content: center;}
+.membersbtn{display: flex; align-items: right; justify-content: center;}
+.eventsbtn{display: flex; align-items: right; justify-content: center;}
+.homieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+.memberieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+.eventieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+
+/* myloginpage.html */
+.login-body{
+    background: linear-gradient(145deg, 
+    #FFFFFF 0%, 
+    #3BA8E9 75%, 
+    #141A6B 100%);
+    background-repeat: no-repeat;
+    background-size: cover;        
+    height: 100vh;                  
+    display: flex;                
+    justify-content: center;        
+    align-items: center;
+}
+
+.login-box{
+    width: 600px;
+    height: 400px;
+    margin: 100px;
+    border-radius: 100px;
+    box-shadow: 6px 6px 10px rgba(255, 255, 255, 0.3);
+    display: grid;
+    grid-template-columns: 2fr 2fr;
+    position: relative;
+    overflow: hidden;
+}
+
+.logo{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-top-right-radius: 70px;
+    border-bottom-right-radius: 70px;
+    width: 100%;
+    background-color: #137FC3;
+    z-index: 2;
+    transition: transform 0.8s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+.logo.slide{
+    transform: translateX(-50%);
+}
+
+.login{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+}
+
+.btnlogin{
+    position: absolute;
+    bottom: 30px;
+    right: 35px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: none;
+    background-color: #CDE1EF;
+    color: black;
+    cursor: pointer;
+}
+
+.logo-img{
+    margin-top: 100px;
+    transition: transform 0.8s ease;
+}
+
+.logo.slide .logo-img {
+    transform: translateX(70%);
+}
+
+.login-username{
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    margin-bottom: 15px;
+    margin-right: 50px;
+}
+
+#id_username , #id_password{
+    padding-left: 15px;
+    color: #888;
+    font-size: 14px;
+    padding-left: 15px;
+}
+
+#id_username:focus , #id_password:focus{
+    color: black;
+}
+
+.form-control{
+    height: 30px;
+    width: 200px;
+    border-radius: 15px;
+    border: transparent;
+    background-color: #CDE1EF;
+}
+
+.login-password{
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    margin-bottom: 15px;
+    margin-right: 50px;
+}
+
+.d-grid{
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    margin-right: 130px;
+}
+
+.btn-lg{
+    border-radius: 10px;
+    background-color: #3BA8E9;
+    border: none;
+    width: 80px;
+    height: 30px;
+    color: white;
+}
+
+/* addeventpage.html */

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>SnapTrack Events</title>
+        <link href="design.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="top-border">
+            <div class="logo">
+                <img class="logo-hori" src="imgs/logo-horizontal.png" width="415px" height="88px">
+            </div>
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'members' in request.path %}active{% endif %}" href="{% url 'member_list' %}">
+                        <i class="fas fa-users"></i> Members
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if 'events' in request.path %}active{% endif %}" href="{% url 'eqrApp:event_list' %}">
+                        <i class="fas fa-calendar-alt"></i> Events
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </body>
+</html>

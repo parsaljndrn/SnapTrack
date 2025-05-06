@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-users me-2"></i>Member Directory</h2>
+        <div>
+            <a href="{% url 'add_member' %}" class="btn btn-primary me-2">
+                <i class="fas fa-plus"></i> Add Member
+            </a>
+            <button id="massDeleteBtn" class="btn btn-danger" disabled>
+                <i class="fas fa-trash"></i> Delete Selected
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form id="massDeleteForm" method="post" action="{% url 'mass_delete_members' %}">
+                {% csrf_token %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40px">
+                                    <input type="checkbox" id="selectAll">
+                                </th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Section</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="member_ids" value="{{ member.member_id }}" 
+                                           class="member-checkbox">
+                                </td>
+                                <td>{{ member.member_id }}</td>
+                                <td>{{ member.get_full_name }}</td>
+                                <td>{{ member.email|default:"-" }}</td>
+                                <td>{{ member.section|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    No members found. <a href="{% url 'add_member' %}">Add your first member</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.member-checkbox');
+    const massDeleteBtn = document.getElementById('massDeleteBtn');
+    const massDeleteForm = document.getElementById('massDeleteForm');
+
+    // Select all checkbox functionality
+    selectAll.addEventListener('change', function() {
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateDeleteButtonState();
+    });
+
+    // Individual checkbox functionality
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateDeleteButtonState();
+            selectAll.checked = [...checkboxes].every(cb => cb.checked);
+        });
+    });
+
+    // Update delete button state based on selections
+    function updateDeleteButtonState() {
+        const anyChecked = [...checkboxes].some(cb => cb.checked);
+        massDeleteBtn.disabled = !anyChecked;
+    }
+
+    // Mass delete button click handler
+    massDeleteBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (confirm('Are you sure you want to delete the selected members?')) {
+            massDeleteForm.submit();
+        }
+    });
+});
+</script>
+{% endblock %}
