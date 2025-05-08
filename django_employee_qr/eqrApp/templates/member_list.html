@@ -1,11 +1,10 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-users me-2"></i>Member Directory</h2>
         <div>
-            <a href="{% url 'add_member' %}" class="btn btn-primary me-2">
+            <a href="{% url 'eqrApp:add_member' %}" class="btn btn-primary me-2">
                 <i class="fas fa-plus"></i> Add Member
             </a>
             <button id="massDeleteBtn" class="btn btn-danger" disabled>
@@ -14,9 +13,12 @@
         </div>
     </div>
 
+    <!-- Single message container -->
+    <div id="messageContainer"></div>
+
     <div class="card shadow-sm">
         <div class="card-body">
-            <form id="massDeleteForm" method="post" action="{% url 'mass_delete_members' %}">
+            <form id="massDeleteForm">
                 {% csrf_token %}
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -34,7 +36,7 @@
                         </thead>
                         <tbody>
                             {% for member in members %}
-                            <tr>
+                            <tr data-member-id="{{ member.member_id }}">
                                 <td>
                                     <input type="checkbox" name="member_ids" value="{{ member.member_id }}" 
                                            class="member-checkbox">
@@ -44,15 +46,22 @@
                                 <td>{{ member.email|default:"-" }}</td>
                                 <td>{{ member.section|default:"-" }}</td>
                                 <td>
-                                    <a href="{% url 'eqrApp:manage_member' member.member_id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'eqrApp:manage_member' member.member_id %}" 
+                                           class="btn btn-outline-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'eqrApp:view_credentials' member.member_id %}" 
+                                           class="btn btn-outline-info" title="View Credentials">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="6" class="text-center py-4 text-muted">
-                                    No members found. <a href="{% url 'add_member' %}">Add your first member</a>
+                                    No members found. <a href="{% url 'eqrApp:add_member' %}">Add your first member</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -72,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.member-checkbox');
     const massDeleteBtn = document.getElementById('massDeleteBtn');
     const massDeleteForm = document.getElementById('massDeleteForm');
+    const messageContainer = document.getElementById('messageContainer');
 
     // Select all checkbox functionality
     selectAll.addEventListener('change', function() {
@@ -89,19 +99,66 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Update delete button state based on selections
+    // Update delete button state
     function updateDeleteButtonState() {
         const anyChecked = [...checkboxes].some(cb => cb.checked);
         massDeleteBtn.disabled = !anyChecked;
     }
 
+    // Show message function
+    function showMessage(message, type = 'success') {
+        messageContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = messageContainer.querySelector('.alert');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
+
     // Mass delete button click handler
     massDeleteBtn.addEventListener('click', function(e) {
         e.preventDefault();
-        if (confirm('Are you sure you want to delete the selected members?')) {
-            massDeleteForm.submit();
+        
+        if (!confirm('Are you sure you want to delete the selected members?')) {
+            return;
         }
+
+        const formData = new FormData(massDeleteForm);
+        
+        fetch("{% url 'eqrApp:mass_delete_members' %}", {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove deleted rows
+                document.querySelectorAll('.member-checkbox:checked').forEach(checkbox => {
+                    checkbox.closest('tr').remove();
+                });
+                showMessage(data.message);
+            } else {
+                showMessage(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            showMessage('An error occurred while deleting members', 'danger');
+            console.error('Error:', error);
+        });
     });
 });
 </script>
-{% endblock %}
+{% endblock %} 

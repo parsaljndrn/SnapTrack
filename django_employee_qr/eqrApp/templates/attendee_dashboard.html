@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Attendee Dashboard
+                    </h3>
+                </div>
+                {% csrf_token %}
+                <div class="card-body">
+                    <h4>Welcome, {{ member.get_full_name }}</h4>
+                    <p>Member ID: {{ member.get_member_id }}</p>
+                    <p>Section: {{ member.get_section|default:"Not specified" }}</p>
+                    
+                    <div class="mt-4">
+                        <h5>Your Events</h5>
+                        <ul class="list-group">
+                            {% for attendance in member.attendance_set.all %}
+                            <li class="list-group-item">
+                                {{ attendance.event.name }} - {{ attendance.event.date|date:"M d, Y" }}
+                                <span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'late' %}warning{% else %}danger{% endif %}">
+                                    {{ attendance.status|title }}
+                                </span>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item">No events attended yet</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

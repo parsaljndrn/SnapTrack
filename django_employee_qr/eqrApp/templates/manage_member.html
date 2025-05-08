@@ -1,12 +1,10 @@
 {% extends 'base.html' %}
-
-{% block title %}Member Directory{% endblock %}
-
+{% block title %}{% if action == 'Add' %}Add New{% else %}Edit{% endif %} Member{% endblock %}
 {% block content %}
 <div class="container">
-    <div class="card">
-        <div class="card-header">
-            <h3 class="mb-0">{% if form.instance.pk %}Edit{% else %}Add{% endif %} Member</h3>
+    <div class="card shadow-sm">  <!-- Added shadow-sm -->
+        <div class="card-header bg-primary text-white">  <!-- Added bg-primary text-white -->
+            <h3 class="mb-0">{% if action == 'Add' %}Add New{% else %}Edit{% endif %} Member</h3>
         </div>
         <div class="card-body">
             {% if form.non_field_errors %}
@@ -15,6 +13,23 @@
                         {{ error }}
                     {% endfor %}
                 </div>
+            {% endif %}
+            
+            {% if password %}  <!-- Password display section -->
+            <div class="alert alert-success alert-dismissible fade show">
+                <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Member Created Successfully!</h4>
+                <p>Generated Account Credentials:</p>
+                <div class="bg-light p-3 mb-2 rounded">
+                    <p class="mb-1"><strong>Username:</strong> {{ form.instance.member_id }}</p>
+                    <p class="mb-0"><strong>Password:</strong> <code>{{ password }}</code></p>
+                </div>
+                <hr>
+                <p class="mb-0 small">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    This password will not be shown again. Please provide it to the attendee.
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             {% endif %}
             
             <form method="post" class="needs-validation" novalidate>
@@ -81,7 +96,7 @@
                     <!-- Full Width Section Field -->
                     <div class="col-12">
                         <div class="mb-3">
-                            <label for="id_section" class="form-label">Section (4-digit code)</label>
+                            <label for="id_section" class="form-label">Section (4-6-digit code)</label>
                             {{ form.section }}
                             {% if form.section.errors %}
                                 <div class="invalid-feedback d-block">
@@ -89,7 +104,7 @@
                                 </div>
                             {% else %}
                                 <div class="invalid-feedback">
-                                    Please enter exactly 4 alphanumeric characters.
+                                    Please enter upto 6 alphanumeric characters.
                                 </div>
                             {% endif %}
                         </div>
@@ -98,7 +113,9 @@
                 
                 <div class="text-end mt-4">
                     <a href="{% url 'member_list' %}" class="btn btn-secondary me-2">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="submit" class="btn btn-primary">
+                        {% if action == 'Add' %}Create Member{% else %}Save Changes{% endif %}
+                    </button>
                 </div>
             </form>
         </div>
@@ -117,7 +134,7 @@
         member_id: /^\d{11}$/,
         first_name: /^[a-zA-Z ]+$/,
         last_name: /^[a-zA-Z ]+$/,
-        section: /^[a-zA-Z0-9]{4}$/,
+        section: /^[a-zA-Z0-9]{4,6}$/,
         email: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$|^$/
     };
     

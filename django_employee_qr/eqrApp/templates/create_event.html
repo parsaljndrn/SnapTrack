@@ -1,23 +1,51 @@
 {% extends 'base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h3>Create New Event</h3>
-    </div>
-    <div class="card-body">
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
+    <div class="create_event_card">
+        <div class="create_event_card-header">
+            <h2>Create New Event</h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
                 <label for="id_name" class="form-label">Event Name</label>
                 {{ form.name }}
-            </div>
-            <div class="mb-3">
+                {% if form.name.errors %}
+                    <div class="mb-3">{{ form.name.errors }}</div>
+                {% endif %}
+
                 <label for="id_date" class="form-label">Date</label>
                 {{ form.date }}
-            </div>
-            <button type="submit" class="btn btn-primary">Save Event</button>
-            <a href="{% url 'home' %}" class="btn btn-secondary">Cancel</a>
-        </form>
+                {% if form.date.errors %}
+                    <div class="mb-3">{{ form.date.errors }}</div>
+                {% endif %}
+
+                <label for="id_start_time" class="form-label">Start Time</label>
+                    {{ form.start_time }}
+                    {% if form.start_time.errors %}
+                        <div class="text-danger">{{ form.start_time.errors }}</div>
+                    {% endif %}
+                
+                <label for="id_end_time" class="form-label">End Time*</label>
+                    {{ form.end_time }}
+                    {% if form.end_time.errors %}
+                        <div class="text-danger">{{ form.end_time.errors }}</div>
+                    {% endif %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="btns">
+                    <button type="submit" class="saveeventbtn">Save Event</button>
+                    <button type="submit" class="canceleventbtn"><a href="{% url 'home' %}" class="btn-cancel-create-event">Cancel</a></button>
+                </div>
+                
+            </form>
+        </div>
     </div>
-</div>
 {% endblock %}

@@ -5,47 +5,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Employee QR System{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/mydesign.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-        <div class="container">
+    <nav class="navbar">
+        <div class="homelogo">
             <a class="navbar-brand" href="{% url 'home' %}">
-                <i class="fas fa-qrcode me-2"></i>QR Attendance
+                <img src = "{% static 'images/logo-horizontal.png' %}" width = 300px height= 65px>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
-                            <i class="fas fa-home"></i> Home
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'members' in request.path %}active{% endif %}" href="{% url 'member_list' %}">
-                            <i class="fas fa-users"></i> Members
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if 'events' in request.path %}active{% endif %}" href="{% url 'eqrApp:event_list' %}">
-                            <i class="fas fa-calendar-alt"></i> Events
-                        </a>
-                    </li>
-                </ul>
-                <div class="d-flex">
-                    <form action="{% url 'logout' %}" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-light">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
-                    </form>
-                </div>
-            </div>
+        </div>
+        <div class="homie" id="navbarNav">
+            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
+                <i class="fas fa-home"></i> HOME
+            </a>
+        </div>
+        <div class="membersbtn">
+            <a class="nav-link {% if 'members' in request.path %}active{% endif %}" href="{% url 'member_list' %}">
+                <i class="fas fa-users"></i> MEMBERS
+            </a>
+        </div>
+        <div class="eventsbtn">
+            <a class="nav-link {% if 'events' in request.path %}active{% endif %}" href="{% url 'eqrApp:event_list' %}">
+                <i class="fas fa-calendar-alt"></i> EVENTS
+            </a>
+        </div>
+        <div class="d-flex">
+            <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-outline-light">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
         </div>
     </nav>
 

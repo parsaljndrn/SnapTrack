@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.auth import logout
+from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_http_methods
 from django.core.exceptions import PermissionDenied
@@ -9,7 +10,7 @@ from .models import Event, Member, Attendance
 from .forms import EventForm, MemberForm, AttendanceForm
 import qrcode
 import io
-from io import BytesIO
+from django.contrib.auth.hashers import make_password
 from django.core.files import File
 from PIL import Image
 from reportlab.pdfgen import canvas
@@ -17,9 +18,48 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 from django.db.models import Count
 from django.utils import timezone
+import random
+import string
 from django.db import transaction, IntegrityError
 from django.urls import reverse
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.views import LoginView
+from django.shortcuts import redirect
+from django.utils import timezone
 
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        # First try authenticating normally
+        user = authenticate(request, username=username, password=password)
+        
+        if user is None:
+            # Check if this is a member ID that exists
+            if Member.objects.filter(member_id=username).exists():
+                messages.error(request, 'Invalid password')
+            else:
+                messages.error(request, 'Invalid credentials')
+            return render(request, 'myloginpage.html')
+        
+        login(request, user)
+        if user.is_staff:
+            return redirect('home')
+        return redirect('attendee_dashboard')
+    
+    return render(request, 'myloginpage.html')
+
+@login_required
+def attendee_dashboard(request):
+    context = {
+        'page_title': 'Dashboard',
+        'members_count': Member.get_full_name(),
+        'member_id': Member.get_member_id(),
+        'section': Member.get_section(),
+    }
+    return render(request, 'attendee_dashboard.html', context)
 
 @login_required
 def home(request):
@@ -36,6 +76,19 @@ def home(request):
     }
     return render(request, 'home.html', context)
 
+class CustomLoginView(LoginView):
+    def form_valid(self, form):
+        # Check if user is logging in as admin/facilitator
+        user = form.get_user()
+        if user.username == 'admin' and user.check_password('admin123'):
+            return super().form_valid(form)
+        
+        # For attendees, check if username matches member_id format
+        if Member.objects.filter(member_id=user.username).exists():
+            return redirect('attendee_dashboard')  # Redirect to empty page for now
+            
+        return super().form_valid(form)
+
 def logout_user(request):
     logout(request)
     return redirect('login')
@@ -47,7 +100,9 @@ def create_event(request):
     if request.method == 'POST':
         form = EventForm(request.POST)
         if form.is_valid():
-            event = form.save()
+            event = form.save(commit=False)
+            event.created_by = request.user
+            event.save()
             messages.success(request, f'Event "{event.name}" created successfully!')
             return redirect('event_detail', pk=event.pk)
         messages.error(request, 'Please correct the errors below.')
@@ -205,18 +260,29 @@ def member_list(request):
 def mass_delete_members(request):
     member_ids = request.POST.getlist('member_ids')
     if not member_ids:
-        messages.error(request, "No members selected for deletion")
-        return redirect('eqrApp:member_list')
+        return JsonResponse({'success': False, 'message': 'No members selected'}, status=400)
     
     try:
         with transaction.atomic():
-            count = Member.objects.filter(member_id__in=member_ids).count()
-            Member.objects.filter(member_id__in=member_ids).delete()
-        messages.success(request, f"Successfully deleted {count} members")
+            # Get members to be deleted
+            members = Member.objects.filter(member_id__in=member_ids)
+            
+            # Delete associated User accounts
+            User.objects.filter(username__in=member_ids).delete()
+            
+            # Delete members
+            count = members.delete()[0]
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Successfully deleted {count} members'
+            })
+            
     except Exception as e:
-        messages.error(request, f"Error deleting members: {str(e)}")
-    
-    return redirect('eqrApp:member_list')
+        return JsonResponse({
+            'success': False,
+            'message': 'Error deleting members'
+        }, status=500)
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -234,12 +300,35 @@ def manage_member(request, member_id=None):
             try:
                 with transaction.atomic():
                     member = form.save(commit=False)
-                    # Ensure email is None if empty
                     if form.cleaned_data['email'] == "":
                         member.email = None
                     member.save()
-                    messages.success(request, f'Member {member.get_full_name()} saved successfully!')
+                    
+                    if action == 'Add':
+                        # Generate random 6-digit alphanumeric password
+                        password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+                        
+                        # Create or update user account
+                        user, created = User.objects.get_or_create(
+                            username=member.member_id,
+                            defaults={
+                                'password': make_password(password),
+                                'email': member.email or '',
+                                'is_staff': False,
+                                'is_active': True
+                            }
+                        )
+                        
+                        if not created:
+                            # Update existing user if member ID already has an account
+                            user.set_password(password)
+                            user.save()
+                        
+                        messages.success(request, f'Member created successfully!')
+                        messages.info(request, f'Temporary password: {password}')
+                    
                     return redirect('eqrApp:member_list')
+                    
             except IntegrityError as e:
                 if 'email' in str(e) and form.cleaned_data.get('email'):
                     form.add_error('email', 'This email is already registered')
@@ -257,6 +346,7 @@ def manage_member(request, member_id=None):
         'action': action,
         'page_title': f'{action} Member'
     })
+
 from django.views.decorators.http import require_http_methods
 
 @require_http_methods(["GET"])
@@ -360,3 +450,28 @@ def event_attendance_stats(request, event_id):
     }
     
     return JsonResponse(data)
+
+@login_required
+def view_credentials(request, member_id):
+    member = get_object_or_404(Member, member_id=member_id)
+    
+    # Auto-generate new password if expired or doesn't exist
+    if request.user.is_staff and not member.get_current_password():
+        member.generate_temp_password()
+    
+    context = {
+        'member': member,
+        'is_staff': request.user.is_staff,
+        'current_password': member.get_current_password()
+    }
+    return render(request, 'view_credentials.html', context)
+
+# def delete_event(request, pk):
+#     event = get_object_or_404(Event, pk=pk)
+    
+#     if request.method == 'POST':
+#         event.delete()
+#         messages.success(request, "Event deleted successfully")
+#         return redirect('eqrApp:event_list')
+
+#     return redirect('eqrApp:event_list')

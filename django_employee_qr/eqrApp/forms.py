@@ -5,10 +5,27 @@ from .models import Event, Member, Attendance
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ['name', 'date']
+        fields = ['name', 'date', 'start_time', 'end_time']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'})
+            'name': forms.TextInput(attrs={'class': 'form-control-events mb-3', 'placeholder': 'Enter event name'}),
+            'date': forms.DateInput(attrs={'class': 'form-control-events mb-3', 'type': 'date'}),
+            'start_time': forms.TimeInput(attrs={'type': 'time', 'required': 'required'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time', 'required': 'required'}),
         }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        
+        if not start_time:
+            raise forms.ValidationError("Start time is required")
+        if not end_time:
+            raise forms.ValidationError("End time is required")
+        if start_time and end_time and start_time >= end_time:
+            raise forms.ValidationError("End time must be after start time")
+        
+        return cleaned_data
 
 class MemberForm(forms.ModelForm):
     member_id = forms.CharField(
@@ -28,7 +45,7 @@ class MemberForm(forms.ModelForm):
     section = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
-            'pattern': r'^[a-zA-Z0-9]{4}$',
+            'pattern': r'^[a-zA-Z0-9]{4,6}$',
             'title': 'Please enter your designated section'
         }))
     
@@ -63,4 +80,4 @@ class AttendanceForm(forms.ModelForm):
         fields = ['status']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control'})
-        }
+        } 

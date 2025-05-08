@@ -1,48 +1,59 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-calendar-alt me-2"></i>All Events</h2>
-        <a href="{% url 'eqrApp:create_event' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Create New Event
-        </a>
+<div class="event_list">
+    <div class="allevents-title">
+        <div class="allevents"><h1>EVENTS</h1></div>
+        <div class="btn-create-event"><a class="btn-create-event-text" href="{% url 'eqrApp:create_event' %}">
+            <i class="fas fa-plus"></i>Create New Event
+        </a></div>
     </div>
-
-    <div class="card shadow-sm">
-        <div class="card-body">
+    <div class="events-box">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table-events">
                     <thead>
                         <tr>
-                            <th>Event Name</th>
-                            <th>Date</th>
-                            <th>Created By</th>
-                            <th>Actions</th>
+                            <td class="data-names">
+                                <table class="data-names-table">
+                                    <tr>
+                                        <th class="eventname"> Event Name</th>
+                                        <th class="eventdate">Date</th>
+                                        <th class="eventcreated">Time</th>
+                                        <th class="eventactions">Action</th>
+                                    </tr>
+                                </table>
+                            </td>
                         </tr>
                     </thead>
                     <tbody>
                         {% for event in events %}
                         <tr>
-                            <td>{{ event.name }}</td>
-                            <td>{{ event.date|date:"M d, Y" }}</td>
-                            <td>{{ event.created_by.username }}</td>
-                            <td>
-                                <a href="{% url 'eqrApp:event_detail' event.pk %}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                            </td>
+                            <td><div class="data-rows">
+                                <div class="eventname-link">{{ event.name }}</div>
+                                <div class="eventdate-link">{{ event.date|date:"M d, Y" }}</div>
+                                <div class="eventcreated-link">
+                                    {% if event.start_time and event.end_time %}
+                                    {{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}
+                                    {% else %}
+                                    Not specified
+                                    {% endif %}
+                                </div>
+                                <div class="eventactions-link">
+                                    <a href="{% url 'eqrApp:event_detail' event.pk %}" class="eventactions-btn">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </div>
+                            </div></td>
                         </tr>
                         {% endfor %}
                         <tr>
-                            <td colspan="4" class="text-center py-4 text-muted">
-                                No events found. <a href="{% url 'eqrApp:create_event' %}">Create your first event</a>
+                            <td colspan="4" class="data-rows-else"><center>
+                                No further events found. <a href="{% url 'eqrApp:create_event' %}"> Create New.</a></center>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
     </div>
 </div>
 {% endblock %}
