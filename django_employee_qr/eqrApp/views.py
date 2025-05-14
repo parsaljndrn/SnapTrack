@@ -68,6 +68,10 @@ def custom_login(request):
         'next': next_param
     })
 
+def custom_logout(request):
+    logout(request)
+    return redirect('eqrApp:login')
+
 @login_required
 def attendee_dashboard(request):
     # Ensure only non-staff users can access this

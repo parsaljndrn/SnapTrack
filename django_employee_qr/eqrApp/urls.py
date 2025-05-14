@@ -23,7 +23,7 @@ urlpatterns = [
     path('api/members/<str:member_id>/update/', views.update_member, name='update_member'),
     path('api/events/<int:event_id>/attendance/', views.event_attendance_stats, name='event_attendance_stats'),
     path('login/', views.custom_login, name='login'),
-    path('logout/', LogoutView.as_view(next_page='eqrApp:login'), name='logout'),
+    path('logout/', views.custom_logout, name='logout'),
     path('attendee/dashboard/', views.attendee_dashboard, name='attendee_dashboard'),
 
     
