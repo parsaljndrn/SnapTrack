@@ -14,17 +14,17 @@
 <body>
     <nav class="navbar">
         <div class="homelogo">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <img src = "{% static 'images/logo-horizontal.png' %}" width = 300px height= 65px>
+            <a class="navbar-brand" href="{% url 'eqrApp:home' %}">
+                <img src="{% static 'images/logo-horizontal.png' %}" width="300px" height="65px">
             </a>
         </div>
         <div class="homie" id="navbarNav">
-            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
+            <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'eqrApp:home' %}">
                 <i class="fas fa-home"></i> HOME
-            </a>
+            </a>            
         </div>
         <div class="membersbtn">
-            <a class="nav-link {% if 'members' in request.path %}active{% endif %}" href="{% url 'member_list' %}">
+            <a class="nav-link {% if 'members' in request.path %}active{% endif %}" href="{% url 'eqrApp:member_list' %}">
                 <i class="fas fa-users"></i> MEMBERS
             </a>
         </div>
@@ -34,7 +34,7 @@
             </a>
         </div>
         <div class="d-flex">
-            <form action="{% url 'logout' %}" method="post" class="d-inline">
+            <form action="{% url 'eqrApp:logout' %}" method="post" class="d-inline">
                 {% csrf_token %}
                 <button type="submit" class="btn-outline-light">
                     <i class="fas fa-sign-out-alt"></i> Logout

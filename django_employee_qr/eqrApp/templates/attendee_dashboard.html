@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base_attendee.html' %}
 
 {% block content %}
 <div class="container mt-5">
@@ -10,24 +10,38 @@
                         <i class="fas fa-user me-2"></i>Attendee Dashboard
                     </h3>
                 </div>
-                {% csrf_token %}
                 <div class="card-body">
-                    <h4>Welcome, {{ member.get_full_name }}</h4>
-                    <p>Member ID: {{ member.get_member_id }}</p>
-                    <p>Section: {{ member.get_section|default:"Not specified" }}</p>
+                    <h4>Welcome, {{ request.user.first_name }} {{ request.user.last_name }}</h4>
+                    <p>Member ID: {{ request.user.username }}</p>
                     
                     <div class="mt-4">
-                        <h5>Your Events</h5>
+                        <h5>Your Upcoming Events</h5>
                         <ul class="list-group">
-                            {% for attendance in member.attendance_set.all %}
+                            {% for event in upcoming_events %}
+                            <li class="list-group-item">
+                                {{ event.name }} - {{ event.date|date:"M d, Y" }}
+                                <span class="badge bg-info float-end">
+                                    {{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}
+                                </span>
+                            </li>
+                            {% empty %}
+                            <li class="list-group-item">No upcoming events</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>Your Attendance History</h5>
+                        <ul class="list-group">
+                            {% for attendance in attendance_history %}
                             <li class="list-group-item">
                                 {{ attendance.event.name }} - {{ attendance.event.date|date:"M d, Y" }}
-                                <span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'late' %}warning{% else %}danger{% endif %}">
+                                <span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'late' %}warning{% else %}danger{% endif %} float-end">
                                     {{ attendance.status|title }}
                                 </span>
                             </li>
                             {% empty %}
-                            <li class="list-group-item">No events attended yet</li>
+                            <li class="list-group-item">No attendance records</li>
                             {% endfor %}
                         </ul>
                     </div>

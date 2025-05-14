@@ -50,30 +50,75 @@ class Member(models.Model):
         return f"{self.section}"
     
     def save(self, *args, **kwargs):
-        # Convert empty email to None before saving
+    # Convert empty email to None before saving
         if self.email == "":
             self.email = None
-        
+    
         creating = self._state.adding
-        
         super().save(*args, **kwargs)
-        
+    
         if creating:
-            # Generate a random password for new members
+        # Generate a random password for new members
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-            User.objects.create_user(
-                username=self.member_id,
-                password=password,
-                email=self.email or '',
-                first_name=self.first_name,
-                last_name=self.last_name,
-                is_staff=False
-            )
-            # Store the password temporarily (optional)
+        
+        # Check if user already exists
+            user_exists = User.objects.filter(username=self.member_id).exists()
+        
+            if user_exists:
+            # Update existing user
+                user = User.objects.get(username=self.member_id)
+                user.set_password(password)
+                user.email = self.email or ''
+                user.first_name = self.first_name
+                user.last_name = self.last_name
+                user.save()
+            else:
+            # Create new user
+                User.objects.create_user(
+                    username=self.member_id,
+                    password=password,
+                    email=self.email or '',
+                    first_name=self.first_name,
+                    last_name=self.last_name,
+                    is_staff=False,
+                    is_active=True
+                )
+        
+        # Store the password temporarily
             self.temp_password = password
-
+            self.password_generated_at = timezone.now()
+        
+        # Save again to store password info
+            super().save(update_fields=['temp_password', 'password_generated_at'])
+    
     temp_password = models.CharField(max_length=6, blank=True, null=True)
     password_generated_at = models.DateTimeField(null=True, blank=True)
+    
+    def generate_temp_password(self):
+        """Generate a new temporary password"""
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        self.temp_password = password
+        self.password_generated_at = timezone.now()
+        
+        # Create or update user account
+        user, created = User.objects.get_or_create(
+            username=self.member_id,
+            defaults={
+                'password': make_password(password),
+                'email': self.email or '',
+                'first_name': self.first_name,
+                'last_name': self.last_name,
+                'is_staff': False,
+                'is_active': True
+            }
+        )
+        
+        if not created:
+            user.set_password(password)
+            user.save()
+            
+        self.save()
+        return password
     
     def get_current_password(self):
         """Get current valid password if not expired"""
@@ -81,23 +126,6 @@ class Member(models.Model):
            (timezone.now() - self.password_generated_at) < timedelta(minutes=5):
             return self.temp_password
         return None
-    
-    def generate_temp_password(self):
-        """Generate a new temporary password"""
-        self.temp_password = ''.join(random.choices(
-            string.ascii_letters + string.digits, 
-            k=6
-        ))
-        self.password_generated_at = timezone.now()
-        self.save()
-        
-        # Update user account password if exists
-        if User.objects.filter(username=self.member_id).exists():
-            user = User.objects.get(username=self.member_id)
-            user.set_password(self.temp_password)
-            user.save()
-            
-        return self.temp_password
 
 class Event(models.Model):
     name = models.CharField(max_length=200)

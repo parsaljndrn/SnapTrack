@@ -27,7 +27,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LOGIN_URL = 'eqrApp:login'  # Make sure this matches your URL name
+LOGIN_REDIRECT_URL = 'eqrApp:home'
+LOGOUT_REDIRECT_URL = 'eqrApp:login'
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 # Application definition
 
 INSTALLED_APPS = [

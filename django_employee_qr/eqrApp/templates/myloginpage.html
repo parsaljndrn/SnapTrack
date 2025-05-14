@@ -25,18 +25,19 @@
                     </div>
                 {% endif %}
                 
-                <form method="post" action="{% url 'login' %}">
-                    {% csrf_token %}
+                <form method="post" action="{% url 'eqrApp:login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+                    {% csrf_token %}  <!-- This is crucial -->
                     <div class="login-username">
                         <input type="text" name="username" class="form-control" placeholder="👤 Username" id="id_username" required autofocus>
                     </div>
                     <div class="login-password">
                         <input type="password" name="password" class="form-control" placeholder="🔒 Password" id="id_password" required>
                     </div>
-                    <input type="hidden" name="next" value="{{ next }}">
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
                     <div class="d-grid">
                         <button type="submit" class="btn-lg">Sign In</button>
                     </div>
+                </form>
                 </form>
             </div>
         </div>

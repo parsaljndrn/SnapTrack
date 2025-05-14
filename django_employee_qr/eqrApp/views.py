@@ -11,81 +11,124 @@ from .forms import EventForm, MemberForm, AttendanceForm
 import qrcode
 import io
 from django.contrib.auth.hashers import make_password
-from django.core.files import File
-from PIL import Image
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.utils import ImageReader
 from django.db.models import Count
 from django.utils import timezone
+from datetime import timedelta
 import random
 import string
 from django.db import transaction, IntegrityError
-from django.urls import reverse
-from django.core.mail import send_mail
-from django.conf import settings
 from django.contrib.auth.views import LoginView
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import authenticate, login
+from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
 
+def facilitator_required(view_func):
+    def check_facilitator(user):
+        return user.is_authenticated and user.is_staff
+    return user_passes_test(check_facilitator, login_url='eqrApp:attendee_dashboard')(view_func)
+
+from django.views.decorators.csrf import csrf_protect
+
+@csrf_protect
 def custom_login(request):
+    if request.user.is_authenticated:
+        if request.user.is_staff:
+            return redirect('eqrApp:home')
+        return redirect('eqrApp:attendee_dashboard')
+    
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
-        # First try authenticating normally
         user = authenticate(request, username=username, password=password)
         
-        if user is None:
-            # Check if this is a member ID that exists
-            if Member.objects.filter(member_id=username).exists():
-                messages.error(request, 'Invalid password')
-            else:
-                messages.error(request, 'Invalid credentials')
-            return render(request, 'myloginpage.html')
-        
-        login(request, user)
-        if user.is_staff:
-            return redirect('home')
-        return redirect('attendee_dashboard')
+        if user is not None:
+            login(request, user)
+            next_url = request.POST.get('next', '')
+            if next_url:
+                return redirect(next_url)
+            if user.is_staff:
+                return redirect('eqrApp:home')
+            return redirect('eqrApp:attendee_dashboard')
+        else:
+            messages.error(request, 'Invalid credentials')
+            return redirect('eqrApp:login')
     
-    return render(request, 'myloginpage.html')
+    # Pass the next parameter to template
+    next_param = request.GET.get('next', '')
+    return render(request, 'myloginpage.html', {
+        'next': next_param
+    })
 
 @login_required
 def attendee_dashboard(request):
+    # Ensure only non-staff users can access this
+    if request.user.is_staff:
+        return redirect('eqrApp:home')
+    
+    try:
+        member = Member.objects.get(member_id=request.user.username)
+    except Member.DoesNotExist:
+        logout(request)
+        messages.error(request, "Member account not found")
+        return redirect('eqrApp:login')
+    
+    # Rest of your view logic...
+    today = timezone.now().date()
+    upcoming_events = Event.objects.filter(
+        date__gte=today,
+        date__lte=today + timedelta(days=7)
+    ).order_by('date', 'start_time')
+    
+    attendance_history = Attendance.objects.filter(
+        member=member
+    ).select_related('event').order_by('-event__date')[:10]
+    
     context = {
-        'page_title': 'Dashboard',
-        'members_count': Member.get_full_name(),
-        'member_id': Member.get_member_id(),
-        'section': Member.get_section(),
+        'member': member,
+        'upcoming_events': upcoming_events,
+        'attendance_history': attendance_history,
+        'page_title': 'Attendee Dashboard'
     }
     return render(request, 'attendee_dashboard.html', context)
 
 @login_required
 def home(request):
+    # Redirect non-staff users to attendee dashboard
+    if not request.user.is_staff:
+        return redirect('eqrApp:attendee_dashboard')
+    
     today = timezone.now().date()
     context = {
-        'page_title': 'Dashboard',
+        'page_title': 'Facilitator Dashboard',
         'members_count': Member.objects.count(),
         'events_count': Event.objects.count(),
         'active_events': Event.objects.filter(date__gte=today).count(),
         'recent_events': Event.objects.order_by('-date')[:5],
-        'recent_attendances': Attendance.objects.select_related('member', 'event')
-                              .order_by('-timestamp')[:10],
-        'events': Event.objects.order_by('-date')  # Add all events for the dropdown
+        'recent_members': Member.objects.order_by('-date_created')[:5],
     }
     return render(request, 'home.html', context)
 
 class CustomLoginView(LoginView):
+    template_name = 'myloginpage.html'  # Use your custom login template
+
     def form_valid(self, form):
         # Check if user is logging in as admin/facilitator
         user = form.get_user()
         if user.username == 'admin' and user.check_password('admin123'):
             return super().form_valid(form)
-        
+
         # For attendees, check if username matches member_id format
         if Member.objects.filter(member_id=user.username).exists():
-            return redirect('attendee_dashboard')  # Redirect to empty page for now
+            return redirect('eqrApp:attendee_dashboard')  # Redirect to attendee dashboard
             
         return super().form_valid(form)
 
@@ -285,7 +328,7 @@ def mass_delete_members(request):
         }, status=500)
 
 @login_required
-@require_http_methods(["GET", "POST"])
+@facilitator_required
 def manage_member(request, member_id=None):
     if member_id:
         member = get_object_or_404(Member, member_id=member_id)
@@ -305,37 +348,42 @@ def manage_member(request, member_id=None):
                     member.save()
                     
                     if action == 'Add':
-                        # Generate random 6-digit alphanumeric password
-                        password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+                        # Generate random password
+                        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
                         
-                        # Create or update user account
+                        # Create user account or update existing one
                         user, created = User.objects.get_or_create(
                             username=member.member_id,
                             defaults={
                                 'password': make_password(password),
                                 'email': member.email or '',
+                                'first_name': member.first_name,
+                                'last_name': member.last_name,
                                 'is_staff': False,
                                 'is_active': True
                             }
                         )
                         
                         if not created:
-                            # Update existing user if member ID already has an account
+                            # Update existing user
                             user.set_password(password)
+                            user.email = member.email or ''
+                            user.first_name = member.first_name
+                            user.last_name = member.last_name
                             user.save()
                         
+                        # Store the temporary password
+                        member.temp_password = password
+                        member.password_generated_at = timezone.now()
+                        member.save()
+                        
                         messages.success(request, f'Member created successfully!')
-                        messages.info(request, f'Temporary password: {password}')
+                        messages.info(request, f'Generated password: {password}')
                     
                     return redirect('eqrApp:member_list')
                     
             except IntegrityError as e:
-                if 'email' in str(e) and form.cleaned_data.get('email'):
-                    form.add_error('email', 'This email is already registered')
-                elif 'member_id' in str(e):
-                    form.add_error('member_id', 'This member ID already exists')
-                else:
-                    messages.error(request, f'Error saving member: {str(e)}')
+                messages.error(request, f'Error saving member: {str(e)}')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -455,14 +503,14 @@ def event_attendance_stats(request, event_id):
 def view_credentials(request, member_id):
     member = get_object_or_404(Member, member_id=member_id)
     
-    # Auto-generate new password if expired or doesn't exist
+    # Generate new password if needed
     if request.user.is_staff and not member.get_current_password():
         member.generate_temp_password()
     
     context = {
         'member': member,
         'is_staff': request.user.is_staff,
-        'current_password': member.get_current_password()
+        'current_password': member.get_current_password() or 'Not available'
     }
     return render(request, 'view_credentials.html', context)
 
