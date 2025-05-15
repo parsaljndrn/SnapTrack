@@ -1,199 +1,81 @@
 {% extends 'base.html' %}
-{% block title %}{% if action == 'Add' %}Add New{% else %}Edit{% endif %} Member{% endblock %}
+{% load static %}
+
+{% block title %}{{ action }} Member{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/manage_member-design.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container">
-    <div class="card shadow-sm">  <!-- Added shadow-sm -->
-        <div class="card-header bg-primary text-white">  <!-- Added bg-primary text-white -->
-            <h3 class="mb-0">{% if action == 'Add' %}Add New{% else %}Edit{% endif %} Member</h3>
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-icon-wrapper">
+            <img src="{% static 'images/Vector.png' %}" alt="" class="form-icon" />
         </div>
-        <div class="card-body">
-            {% if form.non_field_errors %}
-                <div class="alert alert-danger">
-                    {% for error in form.non_field_errors %}
-                        {{ error }}
-                    {% endfor %}
-                </div>
-            {% endif %}
-            
-            {% if password %}  <!-- Password display section -->
-            <div class="alert alert-success alert-dismissible fade show">
-                <h4 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Member Created Successfully!</h4>
-                <p>Generated Account Credentials:</p>
-                <div class="bg-light p-3 mb-2 rounded">
-                    <p class="mb-1"><strong>Username:</strong> {{ form.instance.member_id }}</p>
-                    <p class="mb-0"><strong>Password:</strong> <code>{{ password }}</code></p>
-                </div>
-                <hr>
-                <p class="mb-0 small">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    This password will not be shown again. Please provide it to the attendee.
-                </p>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+        <h2 class="form-title">
+            {% if action == 'Add' %}Add New{% else %}Edit{% endif %} Member
+        </h2>
+
+        {% if form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in form.non_field_errors %}
+                {{ error }}<br>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if password %}
+        <div class="form-errors" style="background: #d4edda; color: #155724;">
+            <strong>Member Created Successfully!</strong><br>
+            Username: {{ form.instance.member_id }}<br>
+            Password: <code>{{ password }}</code><br>
+            <small>This password will not be shown again. Please provide it to the attendee.</small>
+        </div>
+        {% endif %}
+
+        <form method="post" class="member-form" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_member_id">Student Number</label>
+                {{ form.member_id }}
+                <div class="error-msg">{{ form.member_id.errors.0 }}</div>
             </div>
-            {% endif %}
-            
-            <form method="post" class="needs-validation" novalidate>
-                {% csrf_token %}
-                <div class="row g-3">
-                    <!-- Left Column -->
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="id_member_id" class="form-label">Member ID (11 digits)</label>
-                            {{ form.member_id }}
-                            {% if form.member_id.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.member_id.errors.0 }}
-                                </div>
-                            {% else %}
-                                <div class="invalid-feedback">
-                                    Please provide exactly 11 digits.
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_first_name" class="form-label">First Name</label>
-                            {{ form.first_name }}
-                            {% if form.first_name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.first_name.errors.0 }}
-                                </div>
-                            {% else %}
-                                <div class="invalid-feedback">
-                                    Letters only (no numbers or special characters).
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Right Column -->
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="id_email" class="form-label">Email</label>
-                            {{ form.email }}
-                            {% if form.email.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.email.errors.0 }}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="id_last_name" class="form-label">Last Name</label>
-                            {{ form.last_name }}
-                            {% if form.last_name.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.last_name.errors.0 }}
-                                </div>
-                            {% else %}
-                                <div class="invalid-feedback">
-                                    Letters only (no numbers or special characters).
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Full Width Section Field -->
-                    <div class="col-12">
-                        <div class="mb-3">
-                            <label for="id_section" class="form-label">Section (4-6-digit code)</label>
-                            {{ form.section }}
-                            {% if form.section.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ form.section.errors.0 }}
-                                </div>
-                            {% else %}
-                                <div class="invalid-feedback">
-                                    Please enter upto 6 alphanumeric characters.
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="text-end mt-4">
-                    <a href="{% url 'eqrApp:member_list' %}" class="btn btn-secondary me-2">Cancel</a>
-                    <button type="submit" class="btn btn-primary">
-                        {% if action == 'Add' %}Create Member{% else %}Save Changes{% endif %}
-                    </button>
-                </div>
-            </form>
-        </div>
+
+            <div class="form-group">
+                <label for="id_first_name">First Name</label>
+                {{ form.first_name }}
+                <div class="error-msg">{{ form.first_name.errors.0 }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_last_name">Last Name</label>
+                {{ form.last_name }}
+                <div class="error-msg">{{ form.last_name.errors.0 }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_email">Email</label>
+                {{ form.email }}
+                <div class="error-msg">{{ form.email.errors.0 }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_section">Section</label>
+                {{ form.section }}
+                <div class="error-msg">{{ form.section.errors.0 }}</div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'eqrApp:member_list' %}" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">
+                    {% if action == 'Add' %}Create Member{% else %}Save Changes{% endif %}
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
-(function () {
-    'use strict'
-    
-    const forms = document.querySelectorAll('.needs-validation')
-    
-    const patterns = {
-        member_id: /^\d{11}$/,
-        first_name: /^[a-zA-Z ]+$/,
-        last_name: /^[a-zA-Z ]+$/,
-        section: /^[a-zA-Z0-9]{4,6}$/,
-        email: /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$|^$/
-    };
-    
-    // Validate on input
-    document.querySelectorAll('input').forEach(input => {
-        input.addEventListener('input', function() {
-            const fieldName = this.id.replace('id_', '');
-            const pattern = patterns[fieldName];
-            
-            if (pattern) {
-                // Skip validation for empty optional email
-                if (fieldName === 'email' && this.value === '') {
-                    this.classList.remove('is-invalid');
-                    return;
-                }
-                
-                if (this.value && !pattern.test(this.value)) {
-                    this.classList.add('is-invalid');
-                } else {
-                    this.classList.remove('is-invalid');
-                }
-            }
-        });
-    });
-    
-    // Form submission validation
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-            let isValid = true;
-            
-            // Check each field
-            document.querySelectorAll('input').forEach(input => {
-                const fieldName = input.id.replace('id_', '');
-                const pattern = patterns[fieldName];
-                
-                // Skip validation for empty optional email
-                if (fieldName === 'email' && input.value === '') {
-                    return;
-                }
-                
-                if (pattern) {
-                    if (input.value && !pattern.test(input.value)) {
-                        input.classList.add('is-invalid');
-                        isValid = false;
-                    } else if (input.required && !input.value) {
-                        input.classList.add('is-invalid');
-                        isValid = false;
-                    }
-                }
-            });
-            
-            if (!form.checkValidity() || !isValid) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            
-            form.classList.add('was-validated');
-        }, false);
-    });
-})();
-</script>
-{% endblock %}

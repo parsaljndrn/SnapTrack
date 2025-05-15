@@ -123,7 +123,7 @@ class Member(models.Model):
     def get_current_password(self):
         """Get current valid password if not expired"""
         if self.password_generated_at and \
-           (timezone.now() - self.password_generated_at) < timedelta(minutes=5):
+           (timezone.now() - self.password_generated_at) < timedelta(hours=1):
             return self.temp_password
         return None
 
@@ -160,3 +160,12 @@ class Attendance(models.Model):
     
     def __str__(self):
         return f"{self.member} attended {self.event}"
+
+class QRCode(models.Model):
+    member = models.ForeignKey(Member, on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='qr_codes/')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('member', 'event')

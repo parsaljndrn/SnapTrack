@@ -13,6 +13,41 @@
                 <div class="card-body">
                     <h4>Welcome, {{ request.user.first_name }} {{ request.user.last_name }}</h4>
                     <p>Member ID: {{ request.user.username }}</p>
+
+                    <div class="mt-4">
+                        <h5>Your QR Codes</h5>
+                        <div class="row" id="qrCodeContainer">
+                            {% for event in upcoming_events %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0">{{ event.name }}</h6>
+                                        <small class="text-muted">{{ event.date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <div class="qr-placeholder" data-event-id="{{ event.id }}">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                            <p class="mt-2">Loading QR code...</p>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <small class="text-muted">
+                                            {{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    No upcoming events with QR codes
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                     
                     <div class="mt-4">
                         <h5>Your Upcoming Events</h5>
@@ -50,4 +85,137 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrCodeModalLabel">Event QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="modalQrContainer"></div>
+                <h6 id="modalEventName" class="mt-3"></h6>
+                <p id="modalEventDate" class="text-muted"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="downloadQrCode">Download QR Code</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load QR codes for all upcoming events
+        const qrPlaceholders = document.querySelectorAll('.qr-placeholder');
+        
+        qrPlaceholders.forEach(placeholder => {
+            const eventId = placeholder.dataset.eventId;
+            
+            // Add retry function for better reusability
+            function loadQrCode(placeholderElement) {
+                placeholderElement.innerHTML = `
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading QR code...</p>
+                `;
+                
+                fetch(`/events/${eventId}/get-qr/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // Store QR data for later use
+                            placeholder.dataset.qrData = JSON.stringify(data);
+                            
+                            placeholderElement.innerHTML = `
+                                <img src="${data.qr_code}" class="img-fluid qr-code" alt="QR Code" 
+                                     style="max-width: 150px; cursor: pointer;">
+                                <p class="mt-2">Click to view</p>
+                            `;
+                            
+                            // Add click event to show modal
+                            const qrImage = placeholderElement.querySelector('.qr-code');
+                            qrImage.addEventListener('click', function() {
+                                openQrModal(data);
+                            });
+                        } else {
+                            placeholderElement.innerHTML = `
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    ${data.error || 'QR code not available'}
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary mt-2 refresh-qr">
+                                    <i class="fas fa-sync-alt"></i> Retry
+                                </button>
+                            `;
+                            
+                            // Add click event for retry button
+                            const retryButton = placeholderElement.querySelector('.refresh-qr');
+                            if (retryButton) {
+                                retryButton.addEventListener('click', function() {
+                                    loadQrCode(placeholderElement);
+                                });
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching QR code:', error);
+                        placeholderElement.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                Failed to load QR code
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary mt-2 refresh-qr">
+                                <i class="fas fa-sync-alt"></i> Retry
+                            </button>
+                        `;
+                        
+                        // Add click event for retry button
+                        const retryButton = placeholderElement.querySelector('.refresh-qr');
+                        if (retryButton) {
+                            retryButton.addEventListener('click', function() {
+                                loadQrCode(placeholderElement);
+                            });
+                        }
+                    });
+            }
+            
+            // Load QR code initially
+            loadQrCode(placeholder);
+        });
+
+        // Function to open QR modal with data
+        function openQrModal(qrData) {
+            // Set modal content
+            document.getElementById('modalQrContainer').innerHTML = `
+                <img src="${qrData.qr_code}" class="img-fluid" alt="QR Code" style="max-width: 250px;">
+            `;
+            document.getElementById('modalEventName').textContent = qrData.event_name;
+            document.getElementById('modalEventDate').textContent = `${qrData.event_date} (${qrData.event_time || 'All day'})`;
+            
+            // Show modal
+            const qrModal = new bootstrap.Modal(document.getElementById('qrCodeModal'));
+            qrModal.show();
+
+            // Setup download button
+            const downloadBtn = document.getElementById('downloadQrCode');
+            downloadBtn.onclick = function() {
+                const link = document.createElement('a');
+                link.href = qrData.qr_code;
+                link.download = `qrcode-${qrData.event_id}-${qrData.member_id}.png`;
+                link.click();
+            };
+        }
+    });
+</script>
 {% endblock %}

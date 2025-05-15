@@ -25,6 +25,8 @@ urlpatterns = [
     path('login/', views.custom_login, name='login'),
     path('logout/', views.custom_logout, name='logout'),
     path('attendee/dashboard/', views.attendee_dashboard, name='attendee_dashboard'),
+    path('events/<int:event_id>/generate-qr/', views.generate_event_qr, name='generate_event_qr'),
+    path('events/<int:event_id>/get-qr/', views.get_member_event_qr, name='get_member_event_qr'),
 
     
     #path('accounts/login/', views.custom_login, name='login'),

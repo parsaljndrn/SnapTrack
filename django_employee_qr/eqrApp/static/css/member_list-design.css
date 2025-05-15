@@ -1,0 +1,229 @@
+html, body{
+    height: 100%;
+    margin: 0;
+    font-family: 'Inter';
+}
+
+/* base.html */
+.navbar{
+    background: linear-gradient(to bottom right, #3BA8E9, #0F0D56);
+    height: 100px; 
+    display: grid; 
+    grid-template-columns: 7fr 1fr 1fr 1fr 1fr;
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 25px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+    color: white;
+}
+
+.navbar-brand, .nav-link{
+    color: white;
+}
+
+.homelogo{
+    display: flex; 
+    align-items: right; 
+    justify-content: left;
+}
+.membersbtn{
+    display: flex; 
+    align-items: right; 
+    justify-content: center;
+}
+
+.btn-outline-light{
+    border-radius: 5px;
+    background-color: white;
+    border: none;
+    width: 80px;
+    height: 20px;
+}
+
+.homie{display: flex; align-items: right; justify-content: center;}
+.membersbtn{display: flex; align-items: right; justify-content: center;}
+.eventsbtn{display: flex; align-items: right; justify-content: center;}
+.homieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+.memberieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+.eventieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+
+
+/* manage_member.html */
+.member-list-page {
+  max-width: 100%;
+  margin: 40px auto;
+  padding: 0 20px;
+  font-family: 'Segoe UI', sans-serif;
+  color: #333;
+  background: #f9fbfd;
+}
+
+.ml-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ml-title {
+  display: flex;
+  align-items: center;
+  font-size: 2rem;
+  color: #137FC3;
+  margin: 0;
+  font-size: 42px;
+  font-weight: 700;
+  padding-left: 5px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.ml-icon {
+  width: 32px;
+  height: 32px;
+  margin-right: 20px;
+  opacity: 0.6;
+}
+
+.ml-buttons .btn {
+  margin-left: 10px;
+}
+
+.btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  box-sizing: border-box;       
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  color: white;
+  transition: background 0.2s;
+}
+
+.add-btn {
+  background: #137FC3;
+}
+.add-btn:hover {
+  background: #004a80;
+}
+
+.remove-btn {
+  background: #e2574c;
+}
+.remove-btn:disabled {
+  background: #c1c1c1;
+  cursor: not-allowed;
+}
+
+.btn-icon {
+  font-size: 0.8em;   
+  margin-right: 0.5em; 
+}
+
+.ml-card {
+  background: #CDE1EF;
+  border-radius: 30px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.ml-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+}
+
+.ml-table thead {
+  background: white;
+}
+
+.ml-table thead tr {
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.ml-table thead th {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: none;
+  text-align: left;
+}
+
+.ml-table thead th:first-child {
+  width: 40px;
+  text-align: center;
+}
+
+.ml-table thead th:first-child {
+  border-top-left-radius: 50px;
+}
+.ml-table thead th:last-child {
+  border-top-right-radius: 50px;
+}
+
+.ml-table tbody tr {
+  background: transparent;
+}
+
+.ml-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  background: transparent;
+  vertical-align: middle;
+}
+
+.ml-table tbody tr:hover td {
+  background: rgba(255,255,255,0.3);
+}
+
+.ml-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 20px;
+}
+.ml-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 20px;
+  border-bottom: none;
+}
+
+.ml-table td:first-child,
+.ml-table th:first-child {
+  width: 40px;
+}
+
+.empty-row {
+  text-align: center;
+  color: #666;
+  padding: 30px 0;
+}
+
+.empty-row a {
+  color: #2ea1f8;
+  text-decoration: none;
+}
+
+@media (max-width: 768px) {
+  .ml-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ml-buttons {
+    margin-top: 10px;
+  }
+}

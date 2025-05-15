@@ -398,3 +398,55 @@ html, body{
 .btn-cancel-create-event{
     color: white;
 }
+
+/*event_detail.html*/
+.event-details-header-custom-style{
+    margin: 50px;
+    text-align: center;
+}
+
+.event-details-row{
+    margin: 20px;
+    display: flex;
+}
+.event-details-event-name-date{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    white-space: nowrap;
+}
+.qr-custom-event-details{
+    background-color: #137FC3;
+    margin-right: 25px;
+    margin-left: 25px;
+}
+.custom-btn-scanner{
+    background-color: #CDE1EF;
+    color: #137FC3;
+}
+.list-custom-event-details{
+    margin-left: 25px;
+    margin-right: 25px;
+}
+.event-details-editbtn{
+    text-align: right;
+    margin-bottom: 15px;
+    margin-right: 20px;
+}
+.event-details-attendees{
+    background-color: transparent;
+}
+table.table-event-details {
+    background-color: transparent !important;
+}
+
+table.table-event-details th,
+table.table-event-details td {
+    background-color: transparent !important;
+}
+.btn-edit-event-details{
+    background-color: #137FC3;
+    border: 1;
+    border-radius: 10px;
+}

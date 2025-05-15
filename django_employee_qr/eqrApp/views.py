@@ -6,10 +6,12 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_http_methods
 from django.core.exceptions import PermissionDenied
-from .models import Event, Member, Attendance
+from .models import Event, Member, Attendance, QRCode
 from .forms import EventForm, MemberForm, AttendanceForm
 import qrcode
 import io
+import os
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
@@ -30,6 +32,12 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
+from django.urls import reverse
+import json
+from io import BytesIO
+from django.core.files.base import ContentFile
+import base64
+from PIL import Image
 
 def facilitator_required(view_func):
     def check_facilitator(user):
@@ -85,16 +93,21 @@ def attendee_dashboard(request):
         messages.error(request, "Member account not found")
         return redirect('eqrApp:login')
     
-    # Rest of your view logic...
+    # Get upcoming events
     today = timezone.now().date()
     upcoming_events = Event.objects.filter(
         date__gte=today,
         date__lte=today + timedelta(days=7)
     ).order_by('date', 'start_time')
     
+    # Get attendance history
     attendance_history = Attendance.objects.filter(
         member=member
     ).select_related('event').order_by('-event__date')[:10]
+    
+    # Initialize QR codes in session if needed
+    if 'event_qr_codes' not in request.session:
+        request.session['event_qr_codes'] = {}
     
     context = {
         'member': member,
@@ -102,6 +115,7 @@ def attendee_dashboard(request):
         'attendance_history': attendance_history,
         'page_title': 'Attendee Dashboard'
     }
+    
     return render(request, 'attendee_dashboard.html', context)
 
 @login_required
@@ -151,7 +165,7 @@ def create_event(request):
             event.created_by = request.user
             event.save()
             messages.success(request, f'Event "{event.name}" created successfully!')
-            return redirect('event_detail', pk=event.pk)
+            return redirect('eqrApp:event_detail', pk=event.pk)
         messages.error(request, 'Please correct the errors below.')
     else:
         form = EventForm()
@@ -214,83 +228,6 @@ def event_detail(request, pk):
         'absent_percentage': absent_percentage,
     })
 
-@login_required
-def generate_all_qr(request, event_id):
-    event = get_object_or_404(Event, pk=event_id)
-    attendees = Attendance.objects.filter(event=event).select_related('member').order_by('member__last_name')
-    if not attendees.exists():
-        messages.warning(request, "No attendees found for this event")
-        return redirect('event_detail', pk=event_id)
-    
-    try:
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{event.name}_attendees_qr_codes.pdf"'
-        
-        buffer = io.BytesIO()
-        p = canvas.Canvas(buffer, pagesize=letter)
-        width, height = letter
-        
-        x, y = 50, height - 100
-        for i, attendee in enumerate(attendees, 1):
-            if i > 1 and i % 3 == 1:
-                p.showPage()
-                x, y = 50, height - 100
-            
-            p.setFont("Helvetica-Bold", 12)
-            p.drawString(x, y, f"ID: {attendee.member.member_id}")
-            p.drawString(x, y-20, f"Name: {attendee.member.get_full_name()}")
-            if attendee.member.section:
-                p.drawString(x, y-40, f"Section: {attendee.member.section}")
-            
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=5,
-                border=2,
-            )
-            qr.add_data(f"MEMBER:{attendee.member.member_id}")
-            qr.make(fit=True)
-            img = qr.make_image(fill_color="black", back_color="white")
-            
-            img_buffer = io.BytesIO()
-            img.save(img_buffer, format='PNG')
-            img_buffer.seek(0)
-            
-            p.drawImage(ImageReader(img_buffer), x, y-140, width=100, height=100)
-            x += 180
-        
-        p.save()
-        pdf = buffer.getvalue()
-        buffer.close()
-        response.write(pdf)
-        return response
-    
-    except Exception as e:
-        messages.error(request, f"Error generating PDF: {str(e)}")
-        return redirect('event_detail', pk=event_id)
-
-# @login_required
-# def generate_qr(request, member_id):
-#     member = get_object_or_404(Member, member_id=member_id)
-    
-#     try:
-#         qr = qrcode.QRCode(
-#             version=1,
-#             error_correction=qrcode.constants.ERROR_CORRECT_L,
-#             box_size=10,
-#             border=4,
-#         )
-#         qr.add_data(f"MEMBER:{member.member_id}")
-#         qr.make(fit=True)
-#         img = qr.make_image(fill_color="black", back_color="white")
-        
-#         response = HttpResponse(content_type="image/png")
-#         response['Cache-Control'] = 'max-age=86400'
-#         img.save(response, "PNG")
-#         return response
-    
-#     except Exception as e:
-#         return HttpResponseBadRequest(f"Error generating QR code: {str(e)}")
 
 @login_required
 def member_list(request):
@@ -527,3 +464,154 @@ def view_credentials(request, member_id):
 #         return redirect('eqrApp:event_list')
 
 #     return redirect('eqrApp:event_list')
+
+@login_required
+def generate_event_qr(request, event_id):
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+    
+    event = get_object_or_404(Event, pk=event_id)
+    members = Member.objects.all()
+    
+    try:
+        # Create a directory to store QR codes if it doesn't exist
+        qr_dir = os.path.join(settings.MEDIA_ROOT, 'qr_codes', str(event_id))
+        os.makedirs(qr_dir, exist_ok=True)
+        
+        counter = 0
+        for member in members:
+            # Create QR code with member ID
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            # Use a simple format - just the member ID
+            qr.add_data(f"MEMBER:{member.member_id}")
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Save to file
+            filename = f"{member.member_id}.png"
+            filepath = os.path.join(qr_dir, filename)
+            img.save(filepath)
+            
+            # Store in database
+            relative_path = f'qr_codes/{event_id}/{filename}'
+            qr_code, created = QRCode.objects.update_or_create(
+                member=member,
+                event=event,
+                defaults={'image': relative_path}
+            )
+            
+            counter += 1
+        
+        return JsonResponse({
+            'success': True, 
+            'message': f'Generated QR codes for {counter} members'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'error': f'Error generating QR codes: {str(e)}'
+        }, status=500)
+
+@login_required
+def get_member_event_qr(request, event_id):
+    event = get_object_or_404(Event, pk=event_id)
+    
+    if request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Not available for staff users'}, status=403)
+    
+    try:
+        member = Member.objects.get(member_id=request.user.username)
+    except Member.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Member not found'}, status=404)
+    
+    try:
+        # Try to get existing QR code
+        qr_code = QRCode.objects.get(member=member, event=event)
+    except QRCode.DoesNotExist:
+        # Generate QR code on-the-fly if it doesn't exist
+        try:
+            qr_data = {
+                'member_id': member.member_id,
+                'event_id': event.id,
+                'event_name': event.name,
+                'event_date': event.date.strftime('%Y-%m-%d'),
+                'event_start_time': event.start_time.strftime('%H:%M') if event.start_time else None,
+                'event_end_time': event.end_time.strftime('%H:%M') if event.end_time else None,
+            }
+
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+            qr.add_data(f"MEMBER:{member.member_id}")  # Use simple format for QR data
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="black", back_color="white")
+            
+            # Create directory if it doesn't exist
+            qr_dir = os.path.join(settings.MEDIA_ROOT, 'qr_codes', str(event_id))
+            os.makedirs(qr_dir, exist_ok=True)
+            
+            # Save to file
+            filename = f"{member.member_id}.png"
+            filepath = os.path.join(qr_dir, filename)
+            img.save(filepath)
+            
+            # Store the path in the QRCode model
+            relative_path = f'qr_codes/{event_id}/{filename}'
+            qr_code = QRCode.objects.create(
+                member=member,
+                event=event,
+                image=relative_path
+            )
+            
+            # Make sure the image field is saved properly
+            if not qr_code.image:
+                # If image field is empty, set it manually
+                qr_code.image = relative_path
+                qr_code.save()
+                
+        except Exception as e:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Error generating QR code: {str(e)}'
+            }, status=500)
+    
+    try:
+        # Ensure the file exists
+        if not os.path.exists(qr_code.image.path):
+            return JsonResponse({
+                'success': False, 
+                'error': 'QR code file not found'
+            }, status=404)
+            
+        with open(qr_code.image.path, 'rb') as f:
+            image_data = f.read()
+            qr_data_uri = f"data:image/png;base64,{base64.b64encode(image_data).decode()}"
+            
+        return JsonResponse({
+            'success': True, 
+            'qr_code': qr_data_uri,
+            'member_id': member.member_id,
+            'event_id': event.id,
+            'event_name': event.name,
+            'event_date': event.date.strftime('%Y-%m-%d'),
+            'event_time': f"{event.start_time.strftime('%H:%M')} - {event.end_time.strftime('%H:%M')}" if event.start_time and event.end_time else "All day",
+            'event_start_time': event.start_time.strftime('%H:%M') if event.start_time else None,
+            'event_end_time': event.end_time.strftime('%H:%M') if event.end_time else None,
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'error': f'Error processing QR code: {str(e)}'
+        }, status=500)

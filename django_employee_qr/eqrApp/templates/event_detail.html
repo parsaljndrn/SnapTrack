@@ -1,56 +1,50 @@
 {% extends 'base.html' %}
+
 {% block content %}
 <div class="event-detail">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>
-            <i class="fas fa-calendar-day me-2"></i>
-            {{ event.name }} - {{ event.date }}
-        </h2>
-        <div>
-            <a href="{% url 'eqrApp:home' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Back
-            </a>
+        <div class="d-flex justify-content-between align-items-center mb-4 event-details-header-custom-style">
+            <div class="event-details-backbtn">
+                <a href="{% url 'eqrApp:home' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+            <h2 class="event-details-event-name-date mt-3">
+                <i class="fas fa-calendar-day me-2"></i>
+                {{ event.name }} - {{ event.date }}
+            </h2>
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-camera me-2"></i>QR Scanner</h5>
-                </div>
-                <div class="card-body text-center">
-                    <button id="startScanner" class="btn btn-primary mb-3">
-                        <i class="fas fa-play"></i> Start Scanner
-                    </button>
-                    <div id="scanner-container" class="mb-3" style="display:none;">
-                        <video id="scanner" width="100%" class="rounded border"></video>
+        <div class="event-details-row">
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm qr-custom-event-details">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-camera me-2"></i>QR Scanner</h5>
                     </div>
-                    <p class="text-muted small">Point the camera at an attendee's QR code to register attendance.</p>
+                    <div class="card-body text-center">
+                        <button id="startScanner" class="custom-btn-scanner">
+                            <i class="fas fa-play"></i> Start Scanner
+                        </button>
+                        <div id="scanner-container" class="mb-3" style="display:none;">
+                            <video id="scanner" width="100%" class="rounded border"></video>
+                        </div>
+                        <p class="text-muted small">Point the camera at a member's QR code to register attendance</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-list-check me-2"></i>Attendance</h5>
-                    <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="btn btn-sm btn-primary">
-                        <i class="fas fa-edit"></i> Edit Attendance
-                    </a>
-                </div>
-
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
+            <div class="col-md-6">
+                <div class="card shadow-sm list-custom-event-details">
+                    <div class="event-detail-card-body">
+                        <div class="table-responsive">
+                            <table class="table-event-details table-sm">
+                                <thead>
                                 <tr>
                                     <th>Name</th>
                                     <th>Time</th>
                                     <th>Status</th>
                                 </tr>
-                            </thead>
-                            <tbody>
+                                </thead>
+                                <tbody>
                                 {% for attendance in attendances %}
                                 <tr>
                                     <td>{{ attendance.member.get_full_name }}</td>
@@ -68,13 +62,21 @@
                                     </td>
                                 </tr>
                                 {% endfor %}
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="event-details-editbtn">
+                            <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="btn btn-sm btn-edit-event-details">
+                            Edit Manually
+                            </a>
+                            <button id="generateQRCodes" class="btn btn-sm btn-success ms-2">
+                                <i class="fas fa-qrcode me-1"></i> Generate QR Codes
+                            </button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
     <div class="row mt-4">
         <div class="col-12">
@@ -131,6 +133,7 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -199,6 +202,36 @@
             });
         } catch (error) {
             console.error('Error creating chart:', error);
+        }
+
+        // QR Code Generation
+        const generateQRButton = document.getElementById('generateQRCodes');
+        if (generateQRButton) {
+            generateQRButton.addEventListener('click', function() {
+                // Show loading state
+                generateQRButton.disabled = true;
+                generateQRButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+                
+                // Call the API
+                fetch('{% url "eqrApp:generate_event_qr" event.id %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('QR codes generated successfully for all members!');
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to generate QR codes. Please try again.');
+                    })
+                    .finally(() => {
+                        // Reset button
+                        generateQRButton.disabled = false;
+                        generateQRButton.innerHTML = '<i class="fas fa-qrcode me-1"></i> Generate QR Codes';
+                    });
+            });
         }
     });
 </script>

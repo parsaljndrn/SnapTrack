@@ -1,149 +1,86 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/home-design.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="dashboard">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
-            <hr>
+<div class="dashboard-title">
+    <h3>Dashboard</h3>
+</div>
+
+<div class="dashboard-container">
+    <!-- Members Card -->
+    <div class="card members">
+        <i class="fas fa-users"></i> <strong>Members</strong>
+        <p class="display-4">{{ members_count }}</p>
+        <div class="card-buttons">
+            <a href="{% url 'eqrApp:member_list' %}">
+                <i class="fa-solid fa-list-ul" style="color: #ffffff;"></i> View All
+            </a>
+            <a href="{% url 'eqrApp:add_member' %}">
+                <i class="fa-solid fa-plus" style="color: #ffffff;"></i> Add New
+            </a>
         </div>
     </div>
 
-    <!-- Original Dashboard Cards -->
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <h3 class="card-title">
-                        <i class="fas fa-users text-primary"></i> Members
-                    </h3>
-                    <p class="display-4">{{ members_count }}</p>
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'eqrApp:member_list' %}" class="btn btn-primary">
-                            <i class="fas fa-list"></i> View All
-                        </a>
-                        <a href="{% url 'eqrApp:add_member' %}" class="btn btn-outline-primary">
-                            <i class="fas fa-plus"></i> Add New
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center">
-                    <h3 class="card-title">
-                        <i class="fas fa-calendar-alt text-success"></i> Events
-                    </h3>
-                    <p class="display-4">{{ events_count }}</p>
-                    <div class="d-grid gap-2">
-                        <a href="{% url 'eqrApp:event_list' %}" class="btn btn-success">
-                            <i class="fas fa-list"></i> View All
-                        </a>
-                        <a href="{% url 'eqrApp:create_event' %}" class="btn btn-outline-success">
-                            <i class="fas fa-plus"></i> Create New
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h3 class="card-title">
-                        <i class="fas fa-history text-info"></i> Recent Activity
-                    </h3>
-                    <div class="list-group list-group-flush">
-                        {% for event in recent_events %}
-                        <a href="{% url 'eqrApp:event_detail' event.pk %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-calendar-day me-2"></i>
-                            {{ event.name }} - {{ event.date|date:"M d, Y" }}
-                        </a>
-                        {% empty %}
-                        <div class="list-group-item text-muted">No recent events</div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
+    <!-- Events Card -->
+    <div class="card events">
+        <i class="fas fa-calendar-alt"></i> <strong>Events</strong>
+        <p class="display-4">{{ events_count }}</p>
+        <div class="card-buttons">
+            <a href="{% url 'eqrApp:event_list' %}">
+                <i class="fa-solid fa-list-ul" style="color: #ffffff;"></i> View All
+            </a>
+            <a href="{% url 'eqrApp:create_event' %}">
+                <i class="fa-solid fa-plus" style="color: #ffffff;"></i> Add New
+            </a>
         </div>
     </div>
 
-    <!-- Event Attendance Section (Below Members/Events) -->
-<div class="row mt-4">
-    <div class="col-md-8">
-        <div class="card shadow-sm border-primary">  <!-- Added border-primary -->
-            <div class="card-header bg-primary text-white">  <!-- Changed to primary color -->
-                <h4 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Event Attendance</h4>
+    <!-- Recent Activity -->
+    <div class="card recent-activity">
+        <i class="fas fa-history"></i><strong>Recent Activity</strong>
+        <ul>
+            {% for event in recent_events %}
+            <li>
+                <a href="{% url 'eqrApp:event_detail' event.pk %}">
+                    <i class="fas fa-calendar-day"></i> {{ event.name }} - {{ event.date|date:"M d, Y" }}
+                </a>
+            </li>
+            {% empty %}
+            <li>No recent events</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Attendance Summary Section -->
+<div class="dashboard-container">
+    <div class="card" style="flex: 1 1 100%; max-width: 100%;">
+        <label for="event-select"><i class="fa-solid fa-clipboard"></i> Attendance Summary</label>
+        <select id="event-select">
+            {% for event in recent_events %}
+            <option>{{ event.name }}</option>
+            {% endfor %}
+        </select>
+
+        <div class="status-cards">
+            <div class="status present">
+                Present
+                <p>{{ present_count }}</p>
             </div>
-            <div class="card-body">
-                <select class="form-select mb-3" id="eventSelect">
-                    <option value="">Select an event...</option>
-                    {% for event in events %}
-                    <option value="{{ event.id }}">{{ event.name }} - {{ event.date|date:"M d, Y" }}</option>
-                    {% endfor %}
-                </select>
-                
-                <div id="attendanceSummary" style="display:none;">
-                    <h5 class="mb-3 text-center" id="selectedEventTitle"></h5>
-                    <div class="table-responsive">
-                        <table class="table table-bordered text-center" style="background-color: #f8f9fa;">  <!-- Added light background -->
-                            <thead class="table-primary">  <!-- Changed to primary color -->
-                                <tr>
-                                    <th class="py-3">Present</th>  <!-- Added padding -->
-                                    <th class="py-3">Late</th>
-                                    <th class="py-3">Absent</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-success fw-bold fs-4 py-3" id="presentCount">0</td>  <!-- Increased font size -->
-                                    <td class="text-warning fw-bold fs-4 py-3" id="lateCount">0</td>
-                                    <td class="text-danger fw-bold fs-4 py-3" id="absentCount">0</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="status absent">
+                Absent
+                <p>{{ absent_count }}</p>
+            </div>
+            <div class="status late">
+                Late
+                <p>{{ late_count }}</p>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const eventSelect = document.getElementById('eventSelect');
-    const attendanceSummary = document.getElementById('attendanceSummary');
-    const selectedEventTitle = document.getElementById('selectedEventTitle');
-    
-    eventSelect.addEventListener('change', function() {
-        const eventId = this.value;
-        const selectedOption = eventSelect.options[eventSelect.selectedIndex];
-        
-        if (eventId) {
-            // Show loading state
-            selectedEventTitle.textContent = "Loading...";
-            attendanceSummary.style.display = 'block';
-            
-            // Fetch attendance data
-            fetch(`/api/events/${eventId}/attendance/`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('presentCount').textContent = data.present;
-                    document.getElementById('lateCount').textContent = data.late;
-                    document.getElementById('absentCount').textContent = data.absent;
-                    selectedEventTitle.textContent = selectedOption.text;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    selectedEventTitle.textContent = "Error loading data";
-                });
-        } else {
-            attendanceSummary.style.display = 'none';
-        }
-    });
-});
-</script>
-{% endblock %}
-{% endblock %}
