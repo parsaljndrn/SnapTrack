@@ -7,7 +7,7 @@
             Edit Attendance - {{ event.name }}
         </h2>
         <div>
-            <a href="{% url 'event_detail' event.id %}" class="btn btn-outline-secondary">
+            <a href="{% url 'eqrApp:event_detail' event.id %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
@@ -28,7 +28,7 @@
             </div>
         </div>
         <div class="card-body">
-            <form id="bulkAttendanceForm" method="post" action="{% url 'save_bulk_attendance' event.id %}">
+            <form id="bulkAttendanceForm" method="post" action="{% url 'eqrApp:save_bulk_attendance' event.id %}">
                 {% csrf_token %}
                 <div class="table-responsive">
                     <table class="table table-hover">

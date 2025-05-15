@@ -269,28 +269,28 @@ def generate_all_qr(request, event_id):
         messages.error(request, f"Error generating PDF: {str(e)}")
         return redirect('event_detail', pk=event_id)
 
-@login_required
-def generate_qr(request, member_id):
-    member = get_object_or_404(Member, member_id=member_id)
+# @login_required
+# def generate_qr(request, member_id):
+#     member = get_object_or_404(Member, member_id=member_id)
     
-    try:
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(f"MEMBER:{member.member_id}")
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
+#     try:
+#         qr = qrcode.QRCode(
+#             version=1,
+#             error_correction=qrcode.constants.ERROR_CORRECT_L,
+#             box_size=10,
+#             border=4,
+#         )
+#         qr.add_data(f"MEMBER:{member.member_id}")
+#         qr.make(fit=True)
+#         img = qr.make_image(fill_color="black", back_color="white")
         
-        response = HttpResponse(content_type="image/png")
-        response['Cache-Control'] = 'max-age=86400'
-        img.save(response, "PNG")
-        return response
+#         response = HttpResponse(content_type="image/png")
+#         response['Cache-Control'] = 'max-age=86400'
+#         img.save(response, "PNG")
+#         return response
     
-    except Exception as e:
-        return HttpResponseBadRequest(f"Error generating QR code: {str(e)}")
+#     except Exception as e:
+#         return HttpResponseBadRequest(f"Error generating QR code: {str(e)}")
 
 @login_required
 def member_list(request):
@@ -485,7 +485,7 @@ def save_bulk_attendance(request, event_id):
                 count_updated += 1
     
     messages.success(request, f'Successfully updated attendance for {count_updated} members!')
-    return redirect('event_detail', pk=event_id)
+    return redirect('eqrApp:event_detail', pk=event_id)
 
 @login_required
 def event_attendance_stats(request, event_id):
