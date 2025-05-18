@@ -1,131 +1,160 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}">
+{% endblock %}
 
 {% block content %}
-<div class="event-detail">
-        <div class="d-flex justify-content-between align-items-center mb-4 event-details-header-custom-style">
-            <div class="event-details-backbtn">
-                <a href="{% url 'eqrApp:home' %}" class="btn btn-outline-secondary">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
-            <h2 class="event-details-event-name-date mt-3">
-                <i class="fas fa-calendar-day me-2"></i>
-                {{ event.name }} - {{ event.date }}
-            </h2>
+<div class="event-details-box">
+    <div class="event-details-header">
+        <div class="event-details-back">
+            <a href="{% url 'eqrApp:home' %}" class="event-details-backbtn">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
         </div>
-
-        <div class="event-details-row">
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm qr-custom-event-details">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-camera me-2"></i>QR Scanner</h5>
+        <h2 class="event-details-event-name-date">
+            <i class="fas fa-calendar-day me-2"></i>
+            {{ event.name }} - {{ event.date }}
+        </h2>
+        <div class="event-details-qr">
+            <button id="generateQRCodes" class="qr-generationbtn">
+                <i class="fas fa-qrcode me-1"></i> Generate QR Codes
+            </button>
+        </div>
+    </div>
+    <div class="event-detail-card">
+        <div class="event-detail-scanner"> <!-- flip-box -->
+            <div class="flip-box-inner">
+                <div class="flip-box-front">
+                    <div class="event-detail-qrscanner">
+                        <h4><i class="fas fa-camera me-2"></i> QR Scanner</h4>
+                        <center><h1 class="qreventname">{{ event.name }}</h1>
+                        <h2>{{ event.date }}</h2>
+                        <h2>
+                            {% if event.start_time and event.end_time %}
+                                {{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}
+                            {% else %}
+                                Not specified
+                            {% endif %}
+                        </h2></center>
                     </div>
-                    <div class="card-body text-center">
-                        <button id="startScanner" class="custom-btn-scanner">
-                            <i class="fas fa-play"></i> Start Scanner
+                    <div class="event-detail-btnscanner">
+                        <center><button class="custom-btn-scanner" onclick="flipBox(this)">
+                            <i class="fa-solid fa-qrcode"></i> Start Scanner
+                        </button></center>
+                    </div>
+                </div>
+                <div class="flip-box-back">
+                    <div class="event-detail-qrscanner">
+                        <h4><i class="fas fa-camera me-2"></i> QR Scanner</h4>
+                    </div>
+                    <div class="event-detail-btncamera">
+                        <button class="custom-btn-scannerbck" onclick="flipBox(this)">
+                            <i class="fas fa-rotate-left"></i> Back
                         </button>
-                        <div id="scanner-container" class="mb-3" style="display:none;">
+                        <div id="scanner-container" class="" style="display:none;">
                             <video id="scanner" width="100%" class="rounded border"></video>
                         </div>
                         <p class="text-muted small">Point the camera at a member's QR code to register attendance</p>
                     </div>
                 </div>
             </div>
-
-            <div class="col-md-6">
-                <div class="card shadow-sm list-custom-event-details">
-                    <div class="event-detail-card-body">
-                        <div class="table-responsive">
-                            <table class="table-event-details table-sm">
-                                <thead>
+        </div>
+        <div class="event-detail-attendees">
+            <div class="event-detail-tbl">
+                <table class="table-event-details">
+                    <thead>
+                    <tr>
+                        <td class="attendee-data-names">
+                            <table class="attendee-data-names-table">
                                 <tr>
-                                    <th>Name</th>
-                                    <th>Time</th>
-                                    <th>Status</th>
+                                    <th class="attendee-name"> Name</th>
+                                    <th class="attendee-time">Time</th>
+                                    <th class="attendee-status">Status</th>
                                 </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for attendance in attendances %}
+                    <tr>
+                        <td class="attendee-data">
+                            <div class="attendee-namedata">
+                                {{ attendance.member.get_full_name }}
+                            </div>
+                            <div class="attendee-timedata">
+                                {{ attendance.timestamp|date:"H:i" }}
+                            </div>
+                            <div class="attendee-statusdata">
+                                <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}bg-danger{% endif %}">
+                                    {{ attendance.status|title }}
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td class="text-center py-3 text-muted">
+                            No attendance recorded yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="event-details-editbtn">
+                <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="btn btn-sm btn-edit-event-details">
+                    Edit Manually
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="event-detail-statsbg">
+        <div class="event-detail-stats">
+            <div class="event-detail-stats-header">
+                <h5><i class="fas fa-chart-pie"></i> Attendance Summary</h5>
+            </div>
+            <div class="event-detail-stats-body">
+                    <div class="attendee-piechart">
+                        <canvas id="attendanceChart" height="250"></canvas>
+                    </div>
+                    <div class="attendee-piechart-data">
+                        <div class="attendee-piechart-datatbl">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Status</th>
+                                        <th>Count</th>
+                                        <th>Percentage</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
-                                {% for attendance in attendances %}
-                                <tr>
-                                    <td>{{ attendance.member.get_full_name }}</td>
-                                    <td>{{ attendance.timestamp|date:"H:i" }}</td>
-                                    <td>
-                                        <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}bg-danger{% endif %}">
-                                            {{ attendance.status|title }}
-                                        </span>
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="3" class="text-center py-3 text-muted">
-                                        No attendance recorded yet
-                                    </td>
-                                </tr>
-                                {% endfor %}
+                                    <tr>
+                                        <td><span class="badge bg-success">Present</span></td>
+                                        <td>{{ present_count }}</td>
+                                        <td>{{ present_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-warning">Late</span></td>
+                                        <td>{{ late_count }}</td>
+                                        <td>{{ late_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-danger">Absent</span></td>
+                                        <td>{{ absent_count }}</td>
+                                        <td>{{ absent_percentage }}%</td>
+                                    </tr>
+                                    <tr class="table-secondary">
+                                        <td><strong>Total</strong></td>
+                                        <td><strong>{{ total_members }}</strong></td>
+                                        <td>100%</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    <div class="event-details-editbtn">
-                            <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="btn btn-sm btn-edit-event-details">
-                            Edit Manually
-                            </a>
-                            <button id="generateQRCodes" class="btn btn-sm btn-success ms-2">
-                                <i class="fas fa-qrcode me-1"></i> Generate QR Codes
-                            </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Attendance Summary</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <canvas id="attendanceChart" height="250"></canvas>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Status</th>
-                                            <th>Count</th>
-                                            <th>Percentage</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td><span class="badge bg-success">Present</span></td>
-                                            <td>{{ present_count }}</td>
-                                            <td>{{ present_percentage }}%</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="badge bg-warning">Late</span></td>
-                                            <td>{{ late_count }}</td>
-                                            <td>{{ late_percentage }}%</td>
-                                        </tr>
-                                        <tr>
-                                            <td><span class="badge bg-danger">Absent</span></td>
-                                            <td>{{ absent_count }}</td>
-                                            <td>{{ absent_percentage }}%</td>
-                                        </tr>
-                                        <tr class="table-secondary">
-                                            <td><strong>Total</strong></td>
-                                            <td><strong>{{ total_members }}</strong></td>
-                                            <td>100%</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -134,6 +163,52 @@
 
 {% block extra_js %}
 {{ block.super }}
+<script>
+let scanner = null;
+
+function flipBox(button) {
+  const box = button.closest('.event-detail-scanner');
+  box.classList.toggle('flipped');
+
+  const isFlipped = box.classList.contains('flipped');
+
+  if (isFlipped) {
+    const videoElement = box.querySelector('.scanner-video');
+
+    if (!scanner) {
+      scanner = new Instascan.Scanner({ video: videoElement });
+      scanner.addListener('scan', function (content) {
+        alert('Scanned: ' + content);
+        // You can flip it back automatically here if you want
+        // box.classList.remove('flipped');
+      });
+    }
+
+    // Find and use the first available camera
+    Instascan.Camera.getCameras().then(function (cameras) {
+      if (cameras.length > 0) {
+        scanner.start(cameras[0]);
+      } else {
+        alert('No cameras found.');
+      }
+    }).catch(function (e) {
+      console.error(e);
+      alert('Camera error: ' + e);
+    });
+
+    // Make sure video container is visible
+    box.querySelector('#scanner-container').style.display = 'block';
+  } else {
+    // Flip back: stop camera
+    if (scanner) {
+      scanner.stop();
+    }
+
+    // Hide video
+    box.querySelector('#scanner-container').style.display = 'none';
+  }
+}
+</script>
 <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

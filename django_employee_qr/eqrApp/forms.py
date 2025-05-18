@@ -9,8 +9,8 @@ class EventForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control-events mb-3', 'placeholder': 'Enter event name'}),
             'date': forms.DateInput(attrs={'class': 'form-control-events mb-3', 'type': 'date'}),
-            'start_time': forms.TimeInput(attrs={'type': 'time', 'required': 'required'}),
-            'end_time': forms.TimeInput(attrs={'type': 'time', 'required': 'required'}),
+            'start_time': forms.TimeInput(attrs={'class': 'form-control-time ','type': 'time', 'required': 'required'}),
+            'end_time': forms.TimeInput(attrs={'class': 'form-control-time','type': 'time', 'required': 'required'}),
         }
     
     def clean(self):

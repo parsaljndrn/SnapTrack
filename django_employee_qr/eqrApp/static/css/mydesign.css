@@ -216,8 +216,10 @@ html, body{
 .allevents{
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     margin-left: 30px;
+    color: #137FC3;
 }
-.btn-create-event{
+.btn-create-event-text{
+    text-decoration: none;
     margin-left: 200px;
     width: 150px;
     height: 20px;
@@ -225,23 +227,20 @@ html, body{
     padding: 0.5rem 1rem;
     font-size: 1rem;
     font-weight: 600;
-    color: white;
     background-color: #137FC3;
-    border: 2px solid #0d6efd;
     border-radius: 6px;
     text-align: center;
     cursor: pointer;
     transition: background-color 0.2s, border-color 0.2s;
+    color: white;
 }
-.btn-create-event:hover {
-    background-color: #215E83; 
+.btn-create-event-text:hover {
+    background-color: #CDE1EF; 
+    color: #137FC3;
+    border: 1px solid #137FC3;
     box-shadow: 6px 6px 10px rgba(0, 0, 139, 0.3);
     transform: translateY(-3px);
     transition: all 0.3s ease;
-}
-.btn-create-event-text{
-    color: white;
-    text-decoration: none;
 }
 .data-names{
     background-color: white;
@@ -311,7 +310,10 @@ html, body{
     transition: all 0.3s ease;
 }
 .eventactions-btn:hover{
-    transform: translateY(-3px);
+    background-color: #CDE1EF;
+    color: #137FC3;
+    border: 1px solid #137FC3;
+    transform: scale(1.1);
 }
 
 .data-rows-else{
@@ -320,14 +322,16 @@ html, body{
 
 /* create_event.html */
 .create_event_card{
+    width: 80vw;               
+    max-width: 600px;        
+    height: 45vh;       
+    max-height: 400px; 
     background-color: #CDE1EF;
-    display: grid;
-    grid-template-rows: 1fr 3fr;
-    margin-left: 500px;
-    margin-right: 500px;
+    margin: auto;
+    padding: 10px;
+    overflow: auto;
+    border-radius: 12px;
     margin-top: 50px;
-    border-radius: 50px;
-    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);
 }
 .create_event_card-header{
     align-items: center;
@@ -348,22 +352,30 @@ html, body{
 }
 
 .form-control-events{
-    background-color: #137FC3;
+    background-color: white;
+    border: 1px solid #ccc;
     border-radius: 10px;
     width: 300px;
     height: 30px;
     margin: 20px;
-    color: white;
+}
+.form-control-time{
+    background-color: white;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin: 20px;
 }
 .saveeventbtn{
     border-radius: 10px;
     padding: 7px;
-    background-color: #0a58ca;
+    background-color: #137FC3;
     transition: all 0.3s ease;
     color: white;
+    border: none;
 } 
 .saveeventbtn:hover{
-    transform: translateY(-3px);
+    background-color: #0a58ca;
+    color: #137FC3;
 }
 .btns .saveeventbtn {
     margin-right: 10px; 
@@ -388,65 +400,15 @@ html, body{
 .canceleventbtn{
     border-radius: 10px;
     padding: 7px;
-    background-color: #0a58ca;
+    background-color: #137FC3;
     transition: all 0.3s ease;
     color: white;
+    border: none;
 }
 .canceleventbtn:hover{
-    transform: translateY(-3px);
-}
-.btn-cancel-create-event{
-    color: white;
-}
-
-/*event_detail.html*/
-.event-details-header-custom-style{
-    margin: 50px;
-    text-align: center;
-}
-
-.event-details-row{
-    margin: 20px;
-    display: flex;
-}
-.event-details-event-name-date{
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-    white-space: nowrap;
-}
-.qr-custom-event-details{
-    background-color: #137FC3;
-    margin-right: 25px;
-    margin-left: 25px;
-}
-.custom-btn-scanner{
-    background-color: #CDE1EF;
+    background-color: #0a58ca;
     color: #137FC3;
 }
-.list-custom-event-details{
-    margin-left: 25px;
-    margin-right: 25px;
-}
-.event-details-editbtn{
-    text-align: right;
-    margin-bottom: 15px;
-    margin-right: 20px;
-}
-.event-details-attendees{
-    background-color: transparent;
-}
-table.table-event-details {
-    background-color: transparent !important;
-}
-
-table.table-event-details th,
-table.table-event-details td {
-    background-color: transparent !important;
-}
-.btn-edit-event-details{
-    background-color: #137FC3;
-    border: 1;
-    border-radius: 10px;
+.btn-cancel-create-event, .btn-save-create-event{
+    color: white;
 }

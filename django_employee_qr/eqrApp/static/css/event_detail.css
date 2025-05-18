@@ -1,0 +1,170 @@
+.event-details-body {
+    margin: 0;
+    overflow-x: hidden;
+}
+.event-details-header{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 40px 100px;
+}
+.event-details-back{
+    position: absolute;
+    left: 100px;
+}
+.event-details-backbtn,.qr-generationbtn{
+    background-color: #137FC3;
+    border-radius: 10px;
+    padding: 10px;
+    text-decoration: none;
+    color: white;
+    border: 0;
+}
+.event-details-event-name-date{
+    text-align: center;
+}
+.qr-generationbtn:hover{
+    transform: translateY(-3px);
+    transition: all 0.3s ease;
+}
+.event-details-qr{
+    position: absolute;
+    right: 100px;
+}
+.event-detail-card{
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    padding-left: 50px;
+    padding-right: 50px;
+    gap: 100px;
+    box-sizing: border-box;
+}
+.event-detail-scanner {
+  min-width: 500px;
+  min-height: 400px;
+  box-sizing: border-box;
+}
+.event-detail-attendees {
+  min-width: 500px;
+  min-height: 400px;
+  background-color: #CDE1EF;
+  padding-left: 20px;
+  padding-right: 20px;
+  box-sizing: border-box;
+}
+.event-detail-qrscanner{
+    text-align: left;
+}
+.table-event-details{
+    background-color: bisque;
+    border-radius: 10px;
+}
+.attendee-data-names-table{
+    background-color: white;
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 1), 0 2px 3px rgba(0, 0, 0, 1);
+    border-radius: 100px;
+    width: 100%;
+}
+.event-detail-statsbg{
+    width: 100%;
+    padding-left: 200px;
+    padding-right: 200px;
+    box-sizing: border-box;
+    justify-content: center;
+}
+.event-detail-stats{
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #CDE1EF;
+    padding-left: 40px;
+    padding-right: 40px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.event-detail-stats-header{
+    font-size: xx-large;
+}
+.event-detail-stats-body{
+    display: flex;
+    background-color: bisque;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 150px;
+    box-sizing: border-box;
+}
+.attendee-piechart-data{
+    margin-top: 20px;
+}
+.attendee-piechart-datatbl{
+    background-color:cornflowerblue;
+    width: 100%;
+}
+
+.flip-box-inner {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+  position: relative;
+}
+
+.event-detail-scanner.flipped .flip-box-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-box-front, .flip-box-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  top: 0;
+  left: 0;
+}
+
+.flip-box-front {
+    z-index: 2;
+    background-color: #137FC3;
+    color: white;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    border-radius: 50px;
+}
+.event-detail-btnscanner{
+    padding-top: 30px;
+}
+.custom-btn-scanner{
+    background-color: #CDE1EF;
+    color: #137FC3;
+    border: none;
+    padding: 8px;
+    border-radius: 10px;
+    font-size: medium;
+}
+.qreventname{
+    margin-top: 40px;
+}
+
+.flip-box-back {
+    background-color: #CDE1EF;
+    color: #137FC3;
+    transform: rotateY(180deg);
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-top: 10px;
+    border-radius: 50px;
+}
+.custom-btn-scannerbck{
+    background-color: #137FC3;
+    color: #CDE1EF;
+    border: none;
+    padding: 8px;
+    border-radius: 10px;
+}
