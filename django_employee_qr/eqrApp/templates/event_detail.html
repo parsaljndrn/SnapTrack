@@ -2,14 +2,14 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v={{  now|date:'U' }}">
 {% endblock %}
 
 {% block content %}
 <div class="event-details-box">
     <div class="event-details-header">
         <div class="event-details-back">
-            <a href="{% url 'eqrApp:home' %}" class="event-details-backbtn">
+            <a href="{% url 'eqrApp:event_list' %}" class="event-details-backbtn">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
@@ -56,14 +56,14 @@
                         <div id="scanner-container" class="" style="display:none;">
                             <video id="scanner" width="100%" class="rounded border"></video>
                         </div>
-                        <p class="text-muted small">Point the camera at a member's QR code to register attendance</p>
+                        <center><p class="text-muted small">Point the camera at a member's QR code to register attendance</p></center>
                     </div>
                 </div>
             </div>
         </div>
         <div class="event-detail-attendees">
             <div class="event-detail-tbl">
-                <table class="table-event-details">
+                <center><table class="table-event-details">
                     <thead>
                     <tr>
                         <td class="attendee-data-names">
@@ -102,19 +102,19 @@
                     </tr>
                     {% endfor %}
                     </tbody>
-                </table>
+                </table></center>
             </div>
-            <div class="event-details-editbtn">
-                <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="btn btn-sm btn-edit-event-details">
+            <div class="event-details-edit">
+                <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="event-details-editbtn">
                     Edit Manually
                 </a>
             </div>
         </div>
     </div>
-    <div class="event-detail-statsbg">
+    <div class="event-detail-statsbg"><div class="add">
         <div class="event-detail-stats">
             <div class="event-detail-stats-header">
-                <h5><i class="fas fa-chart-pie"></i> Attendance Summary</h5>
+                <i class="fas fa-chart-pie"></i> Attendance Summary
             </div>
             <div class="event-detail-stats-body">
                     <div class="attendee-piechart">
@@ -122,34 +122,48 @@
                     </div>
                     <div class="attendee-piechart-data">
                         <div class="attendee-piechart-datatbl">
-                            <table class="table table-sm">
+                            <table class="piechart-data-table">
                                 <thead>
                                     <tr>
-                                        <th>Status</th>
-                                        <th>Count</th>
-                                        <th>Percentage</th>
+                                        <td class="piechart-data-names">
+                                            <table class="piechart-data-names-table">
+                                                <tr>
+                                                    <th class="piechart-name">Status</th>
+                                                    <th class="piechart-time">Count</th>
+                                                    <th class="piechart-status">Percentage</th>
+                                                </tr>
+                                            </table>
+                                        </td>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><span class="badge bg-success">Present</span></td>
-                                        <td>{{ present_count }}</td>
-                                        <td>{{ present_percentage }}%</td>
+                                        <td class="piechart-data">
+                                            <div class="piechart-namedata">PRESENT</div>
+                                            <div class="piechart-timedata">{{ present_count }}</div>
+                                            <div class="piechart-statusdata">{{ present_percentage }}%</div>
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td><span class="badge bg-warning">Late</span></td>
-                                        <td>{{ late_count }}</td>
-                                        <td>{{ late_percentage }}%</td>
+                                        <td class="piechart-data">
+                                            <div class="piechart-namedata">LATE</div>
+                                            <div class="piechart-timedata">{{ late_count }}</div>
+                                            <div class="piechart-statusdata">{{ late_percentage }}%</div>
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td><span class="badge bg-danger">Absent</span></td>
-                                        <td>{{ absent_count }}</td>
-                                        <td>{{ absent_percentage }}%</td>
+                                        <td class="piechart-data">
+                                            <div class="piechart-namedata">ABSENT</div>
+                                            <div class="piechart-timedata">{{ absent_count }}</div>
+                                            <div class="piechart-statusdata">{{ absent_percentage }}%</div>
+                                        </td>
                                     </tr>
-                                    <tr class="table-secondary">
-                                        <td><strong>Total</strong></td>
-                                        <td><strong>{{ total_members }}</strong></td>
-                                        <td>100%</td>
+                                    <tr>
+                                        <td class="piechart-data">
+                                            <div class="piechart-namedata"><strong>TOTAL</strong></div>
+                                            <div class="piechart-timedata"><strong>{{ total_members }}</strong></div>
+                                            <div class="piechart-statusdata">100%</div>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -157,12 +171,13 @@
                     </div>
             </div>
         </div>
-    </div>
+    </div></div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
+
 <script>
 let scanner = null;
 
@@ -171,41 +186,70 @@ function flipBox(button) {
   box.classList.toggle('flipped');
 
   const isFlipped = box.classList.contains('flipped');
+  const videoContainer = box.querySelector('#scanner-container');
+  const videoElement = box.querySelector('#scanner');
 
   if (isFlipped) {
-    const videoElement = box.querySelector('.scanner-video');
+    // Show video container
+    videoContainer.style.display = 'block';
 
     if (!scanner) {
       scanner = new Instascan.Scanner({ video: videoElement });
       scanner.addListener('scan', function (content) {
-        alert('Scanned: ' + content);
-        // You can flip it back automatically here if you want
-        // box.classList.remove('flipped');
+        const memberIdMatch = content.match(/MEMBER:(\d+)/);
+        if (memberIdMatch && memberIdMatch[1]) {
+          const memberId = memberIdMatch[1];
+
+          // Get CSRF token from meta tag or Django template
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+          fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken
+            },
+            body: `scan_data=MEMBER:${memberId}`
+            })
+            .then(response => {
+            console.log("Fetch status:", response.status);
+            if (!response.ok) throw new Error('Server returned an error.');
+            return response.text();
+            })
+            .then((data) => {
+            console.log("Server responded successfully:", data);
+            window.location.reload(); // <-- This should fire
+            })
+            .catch(error => {
+            console.error('Error during fetch:', error);
+            alert('Failed to record attendance. Please try again.');
+            });
+
+        } else {
+          alert('Invalid QR code. Please scan a valid member QR code.');
+        }
+        
       });
     }
 
-    // Find and use the first available camera
-    Instascan.Camera.getCameras().then(function (cameras) {
-      if (cameras.length > 0) {
-        scanner.start(cameras[0]);
-      } else {
-        alert('No cameras found.');
-      }
-    }).catch(function (e) {
-      console.error(e);
-      alert('Camera error: ' + e);
-    });
+    Instascan.Camera.getCameras()
+      .then(cameras => {
+        if (cameras.length > 0) {
+          scanner.start(cameras[0]);
+        } else {
+          alert('No cameras found.');
+        }
+      })
+      .catch(e => {
+        console.error(e);
+        alert('Camera error: ' + e);
+      });
 
-    // Make sure video container is visible
-    box.querySelector('#scanner-container').style.display = 'block';
   } else {
-    // Flip back: stop camera
+    // Hide video and stop scanner
     if (scanner) {
       scanner.stop();
     }
-
-    // Hide video
-    box.querySelector('#scanner-container').style.display = 'none';
+    videoContainer.style.display = 'none';
   }
 }
 </script>

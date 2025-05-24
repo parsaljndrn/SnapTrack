@@ -1,0 +1,80 @@
+/* bulk_edit_attendance.html */
+.edit-att-header{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 40px 100px;
+}
+.edit-att-back{
+    position: absolute;
+    left: 100px;
+}
+.edit-att-backbtn{
+    background-color: #137FC3;
+    border-radius: 10px;
+    padding: 10px;
+    text-decoration: none;
+    color: white;
+    border: 0;
+    border: 2px solid transparent;
+}
+.edit-att-backbtn:hover{
+    background-color: white;
+    color: #137FC3;
+    border: 2px solid #137FC3;
+}
+.edit-box{
+    background-color: #137FC3;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 50vw;
+    margin: 0 auto;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 20px;
+    border-radius: 50px;
+}
+.name-nd-btns{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+.allpresent{
+    position: absolute;
+    left: 0;
+}
+.allabsent{
+    position: absolute;
+    right: 0;
+}
+.all-btns{
+    padding: 5px;
+    background-color: #CDE1EF;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    color: #137FC3;
+}
+.all-btns:hover{
+    background-color: #137FC3;
+    border: 2px solid #CDE1EF;
+    color: #CDE1EF;
+
+}
+.edit-details{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 40vh;  
+}
+.edit-attend-tbl{
+    width: 50vw;
+}
+.edit-attend-tbl th, .edit-attend-tbl td{
+    padding:10px;
+}
+.save-btn{
+    padding:10px;
+}

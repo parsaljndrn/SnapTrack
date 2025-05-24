@@ -125,15 +125,34 @@ def home(request):
         return redirect('eqrApp:attendee_dashboard')
     
     today = timezone.now().date()
+    
+    # Get recent events for the activity section
+    recent_events = Event.objects.order_by('-date')[:5]
+    
+    # Calculate attendance stats for the most recent event
+    if recent_events:
+        latest_event = recent_events[0]
+        total_members = Member.objects.count()
+        present_count = Attendance.objects.filter(event=latest_event, status='present').count()
+        late_count = Attendance.objects.filter(event=latest_event, status='late').count()
+        absent_count = total_members - present_count - late_count
+    else:
+        present_count = late_count = absent_count = 0
+    
     context = {
         'page_title': 'Facilitator Dashboard',
         'members_count': Member.objects.count(),
         'events_count': Event.objects.count(),
         'active_events': Event.objects.filter(date__gte=today).count(),
-        'recent_events': Event.objects.order_by('-date')[:5],
+        'recent_events': recent_events,
         'recent_members': Member.objects.order_by('-date_created')[:5],
+        'present_count': present_count,
+        'late_count': late_count,
+        'absent_count': absent_count,
+        'total_members': Member.objects.count(),
     }
     return render(request, 'home.html', context)
+
 
 class CustomLoginView(LoginView):
     template_name = 'myloginpage.html'  # Use your custom login template
@@ -161,7 +180,7 @@ def create_event(request):
     if request.method == 'POST':
         form = EventForm(request.POST)
         if form.is_valid():
-            event = form.save(commit=False)
+            event = form.save(commit=True)
             event.created_by = request.user
             event.save()
             messages.success(request, f'Event "{event.name}" created successfully!')
@@ -200,20 +219,17 @@ def event_detail(request, pk):
         try:
             member_id = scan_data.replace('MEMBER:', '')
             member = Member.objects.get(member_id=member_id)
-            attendance, created = Attendance.objects.get_or_create(
+            attendance, created = Attendance.objects.update_or_create(
                 event=event,
                 member=member,
-                defaults={'status': 'present'} 
+                defaults={'status': 'present'}
             )
             if not created:
                 attendance.status = 'present'
                 attendance.save()
-                messages.info(request, f'{member.get_full_name()} marked as present!')
-            else:
-                messages.success(request, f'{member.get_full_name()} marked as present!')
+            return JsonResponse({'status': 'success'})
         except Member.DoesNotExist:
-            messages.error(request, f'Member ID {member_id} not found!')
-        return redirect('event_detail', pk=event.pk)
+            return JsonResponse({'status': 'error', 'message': 'Member not found'}, status=404)
     
     return render(request, 'event_detail.html', {
         'event': event,
@@ -227,7 +243,6 @@ def event_detail(request, pk):
         'late_percentage': late_percentage,
         'absent_percentage': absent_percentage,
     })
-
 
 @login_required
 def member_list(request):
@@ -480,14 +495,15 @@ def generate_event_qr(request, event_id):
         
         counter = 0
         for member in members:
-            # Create QR code with member ID
+            # Create QR code with member ID in consistent format
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
                 box_size=10,
                 border=4,
             )
-            # Use a simple format - just the member ID
+            
+            # Format: "MEMBER:12345678901"
             qr.add_data(f"MEMBER:{member.member_id}")
             qr.make(fit=True)
             
@@ -552,7 +568,7 @@ def get_member_event_qr(request, event_id):
                 box_size=10,
                 border=4,
             )
-            qr.add_data(f"MEMBER:{member.member_id}")  # Use simple format for QR data
+            qr.add_data(f"MEMBER: {member.member_id}")
             qr.make(fit=True)
             
             img = qr.make_image(fill_color="black", back_color="white")

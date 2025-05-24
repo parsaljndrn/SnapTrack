@@ -138,7 +138,7 @@
                             placeholder.dataset.qrData = JSON.stringify(data);
                             
                             placeholderElement.innerHTML = `
-                                <img src="${data.qr_code}" class="img-fluid qr-code" alt="QR Code" 
+                                <img src="${data.qr_codes}" class="img-fluid qr-code" alt="QR Code" 
                                      style="max-width: 150px; cursor: pointer;">
                                 <p class="mt-2">Click to view</p>
                             `;
@@ -198,7 +198,7 @@
         function openQrModal(qrData) {
             // Set modal content
             document.getElementById('modalQrContainer').innerHTML = `
-                <img src="${qrData.qr_code}" class="img-fluid" alt="QR Code" style="max-width: 250px;">
+                <img src="${qrData.qr_codes}" class="img-fluid" alt="QR Code" style="max-width: 250px;">
             `;
             document.getElementById('modalEventName').textContent = qrData.event_name;
             document.getElementById('modalEventDate').textContent = `${qrData.event_date} (${qrData.event_time || 'All day'})`;
@@ -211,7 +211,7 @@
             const downloadBtn = document.getElementById('downloadQrCode');
             downloadBtn.onclick = function() {
                 const link = document.createElement('a');
-                link.href = qrData.qr_code;
+                link.href = qrData.qr_codes;
                 link.download = `qrcode-${qrData.event_id}-${qrData.member_id}.png`;
                 link.click();
             };
