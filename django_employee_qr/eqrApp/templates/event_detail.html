@@ -187,54 +187,76 @@
 let scanner = null;
 
 function flipBox(button) {
-  const box = button.closest('.event-detail-scanner');
-  box.classList.toggle('flipped');
+    const box = button.closest('.event-detail-scanner');
+    const videoContainer = box.querySelector('#scanner-container');
+    const videoElement = box.querySelector('#scanner');
+    const eventDate = new Date('{{ event.date|date:"Y-m-d" }}');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const isFlipped = box.classList.contains('flipped');
-  const videoContainer = box.querySelector('#scanner-container');
-  const videoElement = box.querySelector('#scanner');
+    if (eventDate < today) {
+            alert("This event has passed. Scanning is no longer available.");
+            return;
+        }
+
+    box.classList.toggle('flipped');
+    const isFlipped = box.classList.contains('flipped');
 
   if (isFlipped) {
     // Show video container
     videoContainer.style.display = 'block';
 
     if (!scanner) {
-      scanner = new Instascan.Scanner({ video: videoElement });
-      scanner.addListener('scan', function (content) {
-        const memberIdMatch = content.match(/MEMBER:(\d+)/);
-        if (memberIdMatch && memberIdMatch[1]) {
-          const memberId = memberIdMatch[1];
+        scanner = new Instascan.Scanner({ video: videoElement });
 
-          // Get CSRF token from meta tag or Django template
-          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
-          fetch(window.location.href, {
-            method: 'POST',
-            headers: {
+        scanner.addListener('scan', function (content) {
+            try {
+            const qrData = JSON.parse(content);
+
+            // Validate QR code data
+            if (
+                !qrData.event_id ||
+                !qrData.member_id ||
+                parseInt(qrData.event_id) !== parseInt('{{ event.id }}')
+            ) {
+                alert('This QR code is not valid for this event.');
+                return;
+            }
+
+            // Get CSRF token
+            const csrfToken =
+                document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRFToken': csrfToken
-            },
-            body: `scan_data=MEMBER:${memberId}`
+                'X-CSRFToken': csrfToken,
+                },
+                body: `scan_data=${encodeURIComponent(content)}`,
             })
-            .then(response => {
-            console.log("Fetch status:", response.status);
-            if (!response.ok) throw new Error('Server returned an error.');
-            return response.text();
-            })
-            .then((data) => {
-            console.log("Server responded successfully:", data);
-            window.location.reload(); // <-- This should fire
-            })
-            .catch(error => {
-            console.error('Error during fetch:', error);
-            alert('Failed to record attendance. Please try again.');
-            });
-
-        } else {
-          alert('Invalid QR code. Please scan a valid member QR code.');
+                .then((response) => {
+                if (!response.ok) throw new Error('Server returned an error.');
+                return response.json();
+                })
+                .then((data) => {
+                if (data.status === 'success') {
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to record attendance.');
+                }
+                })
+                .catch((error) => {
+                console.error('Error during fetch:', error);
+                alert('Failed to record attendance. Please try again.');
+                });
+            } catch (e) {
+            console.error('Error parsing QR code:', e);
+            alert('Invalid QR code format. Please scan a valid QR code.');
+            }
+        });
         }
-        
-      });
-    }
+
 
     Instascan.Camera.getCameras()
       .then(cameras => {

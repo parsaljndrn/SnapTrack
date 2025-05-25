@@ -1,6 +1,7 @@
 from django import forms
 from django.core.validators import RegexValidator
 from .models import Event, Member, Attendance
+from django.utils import timezone
 
 class EventForm(forms.ModelForm):
     class Meta:
@@ -13,19 +14,31 @@ class EventForm(forms.ModelForm):
             'end_time': forms.TimeInput(attrs={'class': 'form-control-time','type': 'time', 'required': 'required'}),
         }
     
-    def clean(self):
-        cleaned_data = super().clean()
-        start_time = cleaned_data.get('start_time')
-        end_time = cleaned_data.get('end_time')
-        
-        if not start_time:
-            raise forms.ValidationError("Start time is required")
-        if not end_time:
-            raise forms.ValidationError("End time is required")
-        if start_time and end_time and start_time >= end_time:
-            raise forms.ValidationError("End time must be after start time")
-        
-        return cleaned_data
+        def clean(self):
+            cleaned_data = super().clean()
+            start_time = cleaned_data.get('start_time')
+            end_time = cleaned_data.get('end_time')
+            date = cleaned_data.get('date')
+            
+            if not start_time:
+                raise forms.ValidationError("Start time is required")
+            if not end_time:
+                raise forms.ValidationError("End time is required")
+            
+            if start_time and end_time:
+                # Prevent end time before start time
+                if start_time >= end_time:
+                    raise forms.ValidationError("End time must be after start time")
+                
+                # Prevent overnight events (start PM and end AM)
+                if start_time.hour >= 12 and end_time.hour < 12:
+                    raise forms.ValidationError("Events cannot span overnight (start PM and end AM)")
+            
+            # Prevent past dates
+            if date and date < timezone.now().date():
+                raise forms.ValidationError("Event date cannot be in the past")
+            
+            return cleaned_data
 
 class MemberForm(forms.ModelForm):
     member_id = forms.CharField(

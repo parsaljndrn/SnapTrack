@@ -125,25 +125,41 @@ def attendee_dashboard(request):
         messages.error(request, "Member account not found")
         return redirect('eqrApp:login')
     
-    # Get upcoming events
+    # Get the most recent event with a QR code for this member
+    current_event_qr = QRCode.objects.filter(member=member).select_related('event').order_by('-event__date').first()
+    
+    # Check if member is already marked present for the current event
+    is_present = False
+    if current_event_qr:
+        is_present = Attendance.objects.filter(
+            event=current_event_qr.event,
+            member=member,
+            status__in=['present', 'late']
+        ).exists()
+    
+    # Get upcoming events (next 7 days) where member is absent
     today = timezone.now().date()
     upcoming_events = Event.objects.filter(
         date__gte=today,
         date__lte=today + timedelta(days=7)
     ).order_by('date', 'start_time')
     
-    # Get attendance history
+    # Filter for events where member is absent
+    absent_events = []
+    for event in upcoming_events:
+        if not Attendance.objects.filter(event=event, member=member, status__in=['present', 'late']).exists():
+            absent_events.append(event)
+    
+    # Get attendance history (last 10 records)
     attendance_history = Attendance.objects.filter(
         member=member
     ).select_related('event').order_by('-event__date')[:10]
     
-    # Initialize QR codes in session if needed
-    if 'event_qr_codes' not in request.session:
-        request.session['event_qr_codes'] = {}
-    
     context = {
         'member': member,
-        'upcoming_events': upcoming_events,
+        'current_event_qr': current_event_qr,
+        'is_present': is_present,  # Add this flag
+        'upcoming_events': absent_events,
         'attendance_history': attendance_history,
         'page_title': 'Attendee Dashboard'
     }
@@ -249,19 +265,31 @@ def event_detail(request, pk):
             return HttpResponseBadRequest("No scan data provided")
         
         try:
-            member_id = scan_data.replace('MEMBER:', '')
+            qr_data = json.loads(scan_data)
+            member_id = qr_data.get('member_id')
+            event_id = qr_data.get('event_id')
+            
+            if not member_id or not event_id or int(event_id) != event.id:
+                return JsonResponse({
+                    'status': 'error', 
+                    'message': 'Invalid QR code for this event'
+                }, status=400)
+            
             member = Member.objects.get(member_id=member_id)
             attendance, created = Attendance.objects.update_or_create(
                 event=event,
                 member=member,
-                defaults={'status': 'present'}
+                defaults={
+                    'status': 'present',
+                    'timestamp': timezone.now()  # Update timestamp on each scan
+                }
             )
-            if not created:
-                attendance.status = 'present'
-                attendance.save()
             return JsonResponse({'status': 'success'})
-        except Member.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Member not found'}, status=404)
+        except (Member.DoesNotExist, json.JSONDecodeError) as e:
+            return JsonResponse({
+                'status': 'error', 
+                'message': 'Invalid QR code data'
+            }, status=400)
     
     return render(request, 'event_detail.html', {
         'event': event,
@@ -502,16 +530,6 @@ def view_credentials(request, member_id):
     }
     return render(request, 'view_credentials.html', context)
 
-# def delete_event(request, pk):
-#     event = get_object_or_404(Event, pk=pk)
-    
-#     if request.method == 'POST':
-#         event.delete()
-#         messages.success(request, "Event deleted successfully")
-#         return redirect('eqrApp:event_list')
-
-#     return redirect('eqrApp:event_list')
-
 @login_required
 def generate_event_qr(request, event_id):
     if not request.user.is_staff:
@@ -521,32 +539,36 @@ def generate_event_qr(request, event_id):
     members = Member.objects.all()
     
     try:
-        # Create a directory to store QR codes if it doesn't exist
         qr_dir = os.path.join(settings.MEDIA_ROOT, 'qr_codes', str(event_id))
         os.makedirs(qr_dir, exist_ok=True)
         
         counter = 0
         for member in members:
-            # Create QR code with member ID in consistent format
+            # Create QR data with event ID, member ID, and event details
+            qr_data = {
+                'event_id': event.id,
+                'member_id': member.member_id,
+                'event_name': event.name,
+                'event_date': event.date.strftime('%Y-%m-%d'),
+                'event_start_time': event.start_time.strftime('%H:%M') if event.start_time else None,
+                'event_end_time': event.end_time.strftime('%H:%M') if event.end_time else None,
+            }
+            
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
                 box_size=10,
                 border=4,
             )
-            
-            # Format: "MEMBER:12345678901"
-            qr.add_data(f"MEMBER:{member.member_id}")
+            qr.add_data(json.dumps(qr_data))  # Encode as JSON string
             qr.make(fit=True)
             
             img = qr.make_image(fill_color="black", back_color="white")
             
-            # Save to file
             filename = f"{member.member_id}.png"
             filepath = os.path.join(qr_dir, filename)
             img.save(filepath)
             
-            # Store in database
             relative_path = f'qr_codes/{event_id}/{filename}'
             qr_code, created = QRCode.objects.update_or_create(
                 member=member,

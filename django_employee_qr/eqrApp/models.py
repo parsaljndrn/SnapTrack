@@ -144,7 +144,7 @@ class Event(models.Model):
 class Attendance(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(default=timezone.now)  # Changed from auto_now_add
     status = models.CharField(
         choices=[
             ('present', 'Present'),
@@ -159,7 +159,7 @@ class Attendance(models.Model):
         ordering = ['-timestamp']
     
     def __str__(self):
-        return f"{self.member} attended {self.event}"
+        return f"{self.member} attended {self.event} at {self.timestamp}"
 
 class QRCode(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
