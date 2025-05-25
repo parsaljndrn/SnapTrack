@@ -53,6 +53,7 @@ html, body{
 .memberieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
 .eventieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
 
+
 /* myloginpage.html */
 .form-group {
     margin-bottom: 20px;
@@ -322,16 +323,15 @@ html, body{
 
 /* create_event.html */
 .create_event_card{
-    width: 80vw;               
-    max-width: 600px;        
-    height: 45vh;       
-    max-height: 400px; 
+    max-width: 700px;           
+    height: 350px;
     background-color: #CDE1EF;
-    margin: auto;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+    border-radius: 100px;
+    margin: 5% auto;
     padding: 10px;
     overflow: auto;
-    border-radius: 12px;
-    margin-top: 50px;
+    border-radius: 50px;
 }
 .create_event_card-header{
     align-items: center;
@@ -341,12 +341,12 @@ html, body{
 }
 .card-body{
     height: 250px;
-    margin-bottom: 20px;
-    margin-top: 40px;
-    margin-left: 80px;
     display: flex;
+    position: relative;
 }
-
+.inside-form-card-body{
+    margin-left: 50px;
+}
 .formname{
     border-radius: 10px;
 }
@@ -365,50 +365,44 @@ html, body{
     border: 1px solid #ccc;
     margin: 20px;
 }
-.saveeventbtn{
+.saveeventbtn , 
+.btn-cancel-create-event{
     border-radius: 10px;
     padding: 7px;
     background-color: #137FC3;
-    transition: all 0.3s ease;
+    border: 2px solid transparent;
     color: white;
-    border: none;
 } 
 .saveeventbtn:hover{
-    background-color: #0a58ca;
+    background-color: white;
+    border: 2px solid #137FC3;
     color: #137FC3;
-}
-.btns .saveeventbtn {
-    margin-right: 10px; 
-    margin-left: -20px;
-    
 }
 #id_name::placeholder{
     color: white;
     margin: 10px;
 }
-
-.btns{
-    margin-top: 20px;
-    margin-left: 100px;
-}
-
-.btns .canceleventbtn {
-    margin-left: 10px; 
-
-}
-
-.canceleventbtn{
-    border-radius: 10px;
-    padding: 7px;
-    background-color: #137FC3;
-    transition: all 0.3s ease;
-    color: white;
-    border: none;
-}
-.canceleventbtn:hover{
-    background-color: #0a58ca;
+.btn-cancel-create-event:hover{
+    background-color: white;
+    border: 2px solid #137FC3;
     color: #137FC3;
 }
-.btn-cancel-create-event, .btn-save-create-event{
+.btn-cancel-create-event{
+    border-radius: 10px;
+    padding: 6px;
+    background-color: #137FC3;
+    border: 2px solid transparent;
     color: white;
+    text-decoration: none;
+}
+
+.btns button{
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+}
+.btns a{
+    position: absolute;
+    bottom: 0;
+    right: 60px;
 }

@@ -4,10 +4,11 @@
 {% block content %}
     <div class="create_event_card">
         <div class="create_event_card-header">
-            <h2>Create New Event</h2>
+            <h2><i class="fa-solid fa-calendar-plus"></i>  Create New Event</h2>
         </div>
         <div class="card-body">
             <form method="post" class="form-card-body">
+                <div class="inside-form-card-body">
                 {% csrf_token %}
                 <div>   
                     <label for="id_name" class="form-label">Event Name</label>
@@ -46,11 +47,11 @@
                         {% endfor %}
                     </div>
                 {% endif %}
-                <div class="btns">
-                    <button type="submit" class="saveeventbtn btn-save-create-event">Save Event</button>
-                    <button type="submit" class="canceleventbtn"><a href="{% url 'eqrApp:home' %}" class="btn-cancel-create-event">Cancel</a></button>
                 </div>
-                
+                <div class="btns">
+                    <button type="submit" class="saveeventbtn">Save Event</button>
+                    <a href="{% url 'eqrApp:home' %}" class="btn-cancel-create-event">Cancel</a>
+                </div>
             </form>
         </div>
     </div>

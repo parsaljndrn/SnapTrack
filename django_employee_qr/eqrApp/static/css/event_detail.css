@@ -52,9 +52,11 @@
     max-width: 600px; 
 }
 .event-detail-attendees {
+    min-height: 400px;  
+    min-width: 300px; 
+    max-width: 600px; 
     position: relative;
     flex: 1 1 500px;
-    height: 60vh;
     background-color: #CDE1EF;
     box-sizing: border-box;
     padding-top: 1%;
@@ -71,13 +73,19 @@
     margin-top:10px;
     margin-bottom: -15px;
 }
+.event-detail-qrscannert{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .event-detail-tbl{
     padding-top: 10px;
 }
 .table-event-details{
-    background-color: violet;
-    border-radius: 10px;
-    width: 35vw;
+    padding: 10px;
+    text-align: center;
+    width: 90%; 
 }
 .attendee-data-names-table{
     background-color: white;
@@ -87,8 +95,6 @@
     padding:8px;
 }
 .attendee-data{
-    margin-left: 50px;
-    border-radius: 100px;
     width: 100%;
     display: flex;
     margin-top: 10px;
@@ -106,13 +112,26 @@
 .event-details-edit {
     position: absolute;
     bottom: 20px;
-    right: 20px;
+    left: 20px;
 }
 .event-details-editbtn{
     padding: 6px;
-    background-color: red;
+    background-color: #137FC3;
     border-radius: 50px;
-
+    padding: 8px;
+    text-decoration: none;
+    color: white;
+    border: 2px solid transparent;
+}
+.event-details-editbtn:hover{
+    background-color: white;
+    color: #137FC3;
+    border: 2px solid #137FC3;
+}
+.exportbtn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
 }
 
 
@@ -152,7 +171,7 @@
 }
 .piechart-data-table{
     padding: 10px;
-    width: 30vw;
+    width: 90%;
     text-align: center;
 }
 .piechart-data-table td , .piechart-data-table th{
@@ -199,6 +218,12 @@
     padding: 8px;
     border-radius: 10px;
     font-size: medium;
+    border: 2px solid transparent;
+}
+.custom-btn-scanner:hover{
+    background-color: #137FC3;
+    color: white;
+    border: 2px solid white;
 }
 .qreventname{
     margin-top: 40px;
@@ -230,6 +255,15 @@
     border: none;
     padding: 8px;
     border-radius: 10px;
+    border: 2px solid transparent;
+}
+.custom-btn-scannerbck:hover{
+    background-color: white;
+    color: #137FC3;
+    border: none;
+    padding: 8px;
+    border-radius: 10px;
+    border: 2px solid #137FC3;
 }
 
 

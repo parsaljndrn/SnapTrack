@@ -38,6 +38,38 @@ from io import BytesIO
 from django.core.files.base import ContentFile
 import base64
 from PIL import Image
+#GAWA NI PARIS
+import csv
+from django.http import HttpResponse
+from .models import Attendance
+import re
+
+def sanitize_filename(name):
+    return re.sub(r'[^A-Za-z0-9_-]', '_', name)
+
+def export_csv(request, event_id):
+    from .models import Attendance, Event
+
+    event = Event.objects.get(pk=event_id) 
+    safe_event_name = sanitize_filename(event.name)  
+
+    event = Event.objects.get(pk=event_id)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{safe_event_name}_attendance.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Event', 'Member', 'Timestamp', 'Status'])
+
+    for obj in Attendance.objects.filter(event=event).select_related('member'):
+        writer.writerow([
+            event.name,  # or event.name depending on your model
+            f"{obj.member.first_name} {obj.member.last_name}",
+            obj.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            obj.get_status_display()
+        ])
+
+    return response
+#GAWA N PARIS
 
 def facilitator_required(view_func):
     def check_facilitator(user):

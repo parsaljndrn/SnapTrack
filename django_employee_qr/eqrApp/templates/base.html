@@ -8,7 +8,8 @@
     <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" href="{% static 'css/mydesign.css' %}?v={{  now|date:'U' }}">
+    <link rel="stylesheet" href="{% static 'css/mydesign.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -43,10 +44,10 @@
         </div>
     </nav>
 
-    <main class="container my-4">
+    <main class="">
         {% if messages %}
-        <div class="row">
-            <div class="col-12">
+        <div class="">
+            <div class="">
                 {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
                     {{ message }}
@@ -62,14 +63,41 @@
 
     <footer class="bg-light text-center py-3 mt-4 border-top">
         <div class="container">
-            <p class="mb-0 text-muted">
+            <center><p class="mb-0 text-muted">
                 &copy; {% now "Y" %} QR Attendance System. All rights reserved.
-            </p>
+            </p></center>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/main.js' %}"></script>
-    {% block extra_js %}{% endblock %}
+    {% block extra_js %}
+    {% if messages %}
+      <div id="django-messages" style="display: none;">
+        {% for message in messages %}
+          <div data-icon="{{ message.tags|escapejs }}" data-text="{{ message|escapejs }}"></div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById("django-messages");
+        if (container) {
+          const messages = container.querySelectorAll("div[data-icon][data-text]");
+          messages.forEach(el => {
+            Swal.fire({
+              icon: el.dataset.icon,
+              text: el.dataset.text,
+              timer: 3000,
+              showConfirmButton: false,
+              toast: true,
+              position: 'top-end'
+            });
+          });
+        }
+      });
+    </script>
+    {% endblock %}
 </body>
 </html>

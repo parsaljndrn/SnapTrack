@@ -1,4 +1,7 @@
 /* bulk_edit_attendance.html */
+.bulk_edit{
+    color: white;
+}
 .edit-att-header{
     display: flex;
     justify-content: center;
@@ -34,6 +37,7 @@
     box-sizing: border-box;
     padding: 20px;
     border-radius: 50px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
 }
 .name-nd-btns{
     display: flex;
@@ -67,7 +71,6 @@
     justify-content: center;
     align-items: center;
     position: relative;
-    height: 40vh;  
 }
 .edit-attend-tbl{
     width: 50vw;
@@ -77,4 +80,12 @@
 }
 .save-btn{
     padding:10px;
+    bottom: 0;
+    margin-top: 20px;
+}
+
+.table-box {
+    max-height: 400px;
+    overflow: auto;
+    padding: 10px;
 }

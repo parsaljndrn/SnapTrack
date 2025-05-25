@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/bulk_edit.css' %}?v={{  now|date:'U' }}">
+    <link rel="stylesheet" href="{% static 'css/bulk_edit.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -14,7 +14,7 @@
             </a>
         </div>
         <div>
-            <h2>
+            <h2 style="color: black;">
                 <i class="fas fa-users-gear me-2"></i>  {{ event.name }}
             </h2>
         </div>
@@ -41,7 +41,7 @@
         <div class="edit-details">
             <form id="bulkAttendanceForm" method="post" action="{% url 'eqrApp:save_bulk_attendance' event.id %}">
                 {% csrf_token %}
-                <div class="">
+                <div class="table-box">
                     <table class="edit-attend-tbl">
                         <thead class="">
                             <tr>

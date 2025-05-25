@@ -5,6 +5,7 @@
     <head>
         <title>SnapTrack</title>
         <link href="{% static 'css/mydesign.css' %}" rel="stylesheet">
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
             function slidelogo() {
                 document.getElementById('logo').classList.toggle('slide');
@@ -44,6 +45,31 @@
     </body>
 </html>
 
-{% block ScriptBlock %}
-{# Empty to prevent any scripts from loading on login page #}
+{% block extra_js %}
+    {% if messages %}
+      <div id="django-messages" style="display: none;">
+        {% for message in messages %}
+          <div data-icon="{{ message.tags|escapejs }}" data-text="{{ message|escapejs }}"></div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById("django-messages");
+        if (container) {
+          const messages = container.querySelectorAll("div[data-icon][data-text]");
+          messages.forEach(el => {
+            Swal.fire({
+              icon: el.dataset.icon,
+              text: el.dataset.text,
+              timer: 3000,
+              showConfirmButton: false,
+              toast: true,
+              position: 'top-end'
+            });
+          });
+        }
+      });
+    </script>
 {% endblock %}

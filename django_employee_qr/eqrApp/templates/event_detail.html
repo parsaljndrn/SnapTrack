@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v={{  now|date:'U' }}">
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -46,13 +46,13 @@
                     </div>
                 </div>
                 <div class="flip-box-back">
-                    <div class="event-detail-qrscanner">
+                    <div class="event-detail-qrscannert">
                         <h4><i class="fas fa-camera me-2"></i> QR Scanner</h4>
-                    </div>
-                    <div class="event-detail-btncamera">
                         <button class="custom-btn-scannerbck" onclick="flipBox(this)">
                             <i class="fas fa-rotate-left"></i> Back
                         </button>
+                    </div>
+                    <div class="event-detail-btncamera">
                         <div id="scanner-container" class="" style="display:none;">
                             <video id="scanner" width="100%" class="rounded border"></video>
                         </div>
@@ -106,7 +106,12 @@
             </div>
             <div class="event-details-edit">
                 <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="event-details-editbtn">
-                    Edit Manually
+                    <i class="fa-solid fa-file-pen"></i>  Edit Manually
+                </a>
+            </div>
+            <div class="exportbtn">
+                <a href="{% url 'eqrApp:export_csv' event.id %}" class="event-details-editbtn">
+                    <i class="fa-solid fa-file-export"></i> Export CSV
                 </a>
             </div>
         </div>
