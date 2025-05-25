@@ -663,3 +663,13 @@ def get_member_event_qr(request, event_id):
             'success': False, 
             'error': f'Error processing QR code: {str(e)}'
         }, status=500)
+
+#edited 052525-1043
+@login_required
+@require_http_methods(["POST"])
+def delete_event(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+    event.delete()
+    return JsonResponse({'success': True, 'message': "Event deleted successfully"})

@@ -39,11 +39,11 @@ urlpatterns = [
     #event page (actions)
     path('events/', views.event_list, name='event_list'),  
     path('events/create/', views.create_event, name='create_event'),
-    # path('event/<int:pk>/delete/', views.delete_event, name='delete_event'),
+    path('event/<int:pk>/delete/', views.delete_event, name='delete_event'), #edited 052525-1045
     path('events/<int:pk>/', views.event_detail, name='event_detail'),
     path('events/<int:event_id>/bulk-edit-attendance/', views.bulk_edit_attendance, name='bulk_edit_attendance'),
     path('events/<int:event_id>/save-bulk-attendance/', views.save_bulk_attendance, name='save_bulk_attendance'),
 
     #GAWA NI PARIS
     path('events/<int:event_id>/export-csv/', views.export_csv, name='export_csv'),
-] 
+]
