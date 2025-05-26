@@ -161,6 +161,33 @@ class Attendance(models.Model):
     def __str__(self):
         return f"{self.member} attended {self.event} at {self.timestamp}"
 
+    # In models.py - enhance the save method
+def save(self, *args, **kwargs):
+    # Only auto-set status if it's not being manually set
+    if not self.status or self.status == 'absent':
+        if self.event.start_time:
+            from django.utils.timezone import make_aware
+            from datetime import datetime, time
+            
+            # Create aware datetime objects for comparison
+            event_date = self.event.date
+            event_start_time = self.event.start_time
+            event_start = make_aware(datetime.combine(event_date, event_start_time))
+            
+            arrival_time = self.timestamp
+            
+            # Calculate time difference in minutes
+            time_difference = (arrival_time - event_start).total_seconds() / 60
+            
+            if time_difference <= 10:  # On time or less than 10 mins late
+                self.status = 'present'
+            else:  # More than 10 mins late
+                self.status = 'late'
+        else:  # No start time specified, default to present
+            self.status = 'present'
+    
+    super().save(*args, **kwargs)
+    
 class QRCode(models.Model):
     member = models.ForeignKey(Member, on_delete=models.CASCADE)
     event = models.ForeignKey(Event, on_delete=models.CASCADE)

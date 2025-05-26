@@ -45,7 +45,7 @@
         <ul>
             {% for event in recent_events %}
             <li>
-                <a href="{% url 'eqrApp:event_detail' event.pk %}">
+                <a href="{% url 'eqrApp:event_detail' event.pk %}" class="event-link" data-event-id="{{ event.pk }}">
                     <i class="fas fa-calendar-day"></i> {{ event.name }} - {{ event.date|date:"M d, Y" }}
                 </a>
             </li>
@@ -62,25 +62,90 @@
         <label for="event-select"><i class="fa-solid fa-clipboard"></i> Attendance Summary</label>
         <select id="event-select">
             {% for event in recent_events %}
-            <option>{{ event.name }}</option>
+            <option value="{{ event.pk }}" 
+                    data-present="{{ event.present_count }}"
+                    data-late="{{ event.late_count }}"
+                    data-absent="{{ event.absent_count }}"
+                    data-total="{{ event.total_members }}">
+                {{ event.name }}
+            </option>
             {% endfor %}
         </select>
 
         <div class="status-cards">
             <div class="status present">
                 Present
-                <p>{{ present_count }}</p>
+                <p id="present-count">{{ present_count }}</p>
             </div>
             <div class="status absent">
                 Absent
-                <p>{{ absent_count }}</p>
+                <p id="absent-count">{{ absent_count }}</p>
             </div>
             <div class="status late">
                 Late
-                <p>{{ late_count }}</p>
+                <p id="late-count">{{ late_count }}</p>
             </div>
+        </div>
+        <div class="total-members">
+            Total Members: <span id="total-members">{{ total_members }}</span>
         </div>
     </div>
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const eventSelect = document.getElementById('event-select');
+    const presentCount = document.getElementById('present-count');
+    const absentCount = document.getElementById('absent-count');
+    const lateCount = document.getElementById('late-count');
+    const totalMembers = document.getElementById('total-members');
+
+    // Handle dropdown change
+    eventSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        // Update counts
+        presentCount.textContent = selectedOption.dataset.present;
+        absentCount.textContent = selectedOption.dataset.absent;
+        lateCount.textContent = selectedOption.dataset.late;
+        totalMembers.textContent = selectedOption.dataset.total;
+    });
+
+    // Make event links in Recent Activity update the stats too
+    document.querySelectorAll('.event-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const eventId = this.dataset.eventId;
+            
+            // Find the matching option in the dropdown
+            const option = document.querySelector(`#event-select option[value="${eventId}"]`);
+            if (option) {
+                eventSelect.value = eventId;
+                
+                // Trigger the change event
+                const event = new Event('change');
+                eventSelect.dispatchEvent(event);
+                
+                // Navigate to the event detail page
+                window.location.href = this.href;
+            }
+        });
+    });
+    eventSelect.addEventListener('change', function() {
+        const eventId = this.value;
+        
+        fetch(`/api/events/${eventId}/attendance/`)
+            .then(response => response.json())
+            .then(data => {
+                presentCount.textContent = data.present;
+                absentCount.textContent = data.absent;
+                lateCount.textContent = data.late;
+                totalMembers.textContent = data.total_members;
+            });
+    });
+    
+});
+</script>
+{% endblock %}

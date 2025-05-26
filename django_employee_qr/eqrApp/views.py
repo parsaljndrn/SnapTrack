@@ -177,6 +177,18 @@ def home(request):
     # Get recent events for the activity section
     recent_events = Event.objects.order_by('-date')[:5]
     
+    # Add stats to each event
+    for event in recent_events:
+        total = Member.objects.count()
+        present = Attendance.objects.filter(event=event, status='present').count()
+        late = Attendance.objects.filter(event=event, status='late').count()
+        absent = total - present - late
+        
+        event.present_count = present
+        event.late_count = late
+        event.absent_count = absent
+        event.total_members = total
+    
     # Calculate attendance stats for the most recent event
     if recent_events:
         latest_event = recent_events[0]
@@ -476,6 +488,7 @@ def bulk_edit_attendance(request, event_id):
         'page_title': f'Edit Attendance - {event.name}'
     })
 
+# In views.py - update save_bulk_attendance
 @login_required
 @require_http_methods(["POST"])
 def save_bulk_attendance(request, event_id):
@@ -489,28 +502,38 @@ def save_bulk_attendance(request, event_id):
             status = request.POST.get(status_key)
 
             if status in ['present', 'absent', 'late']:
+                # For manual updates, we'll use the current time as timestamp
                 attendance, created = Attendance.objects.update_or_create(
                     event=event,
                     member=member,
-                    defaults={'status': status}
+                    defaults={
+                        'status': status,
+                        'timestamp': timezone.now()  # Use current time for manual updates
+                    }
                 )
                 count_updated += 1
     
     messages.success(request, f'Successfully updated attendance for {count_updated} members!')
     return redirect('eqrApp:event_detail', pk=event_id)
 
+# In views.py - update event_attendance_stats
 @login_required
 def event_attendance_stats(request, event_id):
     event = get_object_or_404(Event, pk=event_id)
     total_members = Member.objects.count()
     
+    present_count = Attendance.objects.filter(event=event, status='present').count()
+    late_count = Attendance.objects.filter(event=event, status='late').count()
+    absent_count = total_members - present_count - late_count
+    
     data = {
-        'present': Attendance.objects.filter(event=event, status='present').count(),
-        'late': Attendance.objects.filter(event=event, status='late').count(),
-        'absent': total_members - Attendance.objects.filter(
-            event=event, 
-            status__in=['present', 'late']
-        ).count()
+        'present': present_count,
+        'late': late_count,
+        'absent': absent_count,
+        'total_members': total_members,
+        'present_percentage': round((present_count / total_members) * 100) if total_members > 0 else 0,
+        'late_percentage': round((late_count / total_members) * 100) if total_members > 0 else 0,
+        'absent_percentage': round((absent_count / total_members) * 100) if total_members > 0 else 0
     }
     
     return JsonResponse(data)
@@ -552,14 +575,17 @@ def generate_event_qr(request, event_id):
                 'event_date': event.date.strftime('%Y-%m-%d'),
                 'event_start_time': event.start_time.strftime('%H:%M') if event.start_time else None,
                 'event_end_time': event.end_time.strftime('%H:%M') if event.end_time else None,
+                'timestamp': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             
+
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
                 box_size=10,
                 border=4,
             )
+             # Use encrypted data
             qr.add_data(json.dumps(qr_data))  # Encode as JSON string
             qr.make(fit=True)
             
