@@ -1,7 +1,7 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html>
+<html>  
     <head>
         <title>SnapTrack</title>
         <link href="{% static 'css/mydesign.css' %}" rel="stylesheet">
@@ -16,16 +16,10 @@
     <body class="login-body">
         <div class="login-box">
             <div class="logo" id="logo">
-                <img class="logo-img" id="logo-img" src="{% static 'images/logo-vertical.jpg' %}" width="200" height="200">
+                <img class="logo-img" id="logo-img" src="{% static 'images/logo-v.png' %}" width="200" height="200">
                 <input class="btnlogin" type="button" value="Login" onclick="slidelogo()">
             </div>
-            <div class="login">
-                {% if form.errors %}
-                    <div class="alert alert-danger">
-                        Invalid username or password. Please try again.
-                    </div>
-                {% endif %}
-                
+            <div class="login">              
                 <form method="post" action="{% url 'eqrApp:login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
                     {% csrf_token %}  <!-- This is crucial -->
                     <div class="login-username">

@@ -11,6 +11,7 @@ import os
 from django.contrib.auth.hashers import make_password
 import secrets
 from datetime import timedelta
+from django.core.exceptions import ValidationError
 
 class Member(models.Model):
     member_id = models.CharField(max_length=100, unique=True)
@@ -21,21 +22,6 @@ class Member(models.Model):
     avatar = models.ImageField(upload_to='member_avatars/', blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     qr_code = models.ImageField(upload_to='qr_codes/', blank=True, null=True)
-    
-    def create_user_account(self):
-        password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-        
-        # Check if user already exists
-        if not User.objects.filter(username=self.member_id).exists():
-            user = User.objects.create_user(
-                username=self.member_id,
-                password=password,
-                email=self.email or '',
-                is_staff=False,
-                is_superuser=False
-            )
-            return password
-        return None
     
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.member_id})"
@@ -49,50 +35,24 @@ class Member(models.Model):
     def get_section(self):
         return f"{self.section}"
     
-    def save(self, *args, **kwargs):
-    # Convert empty email to None before saving
-        if self.email == "":
-            self.email = None
-    
-        creating = self._state.adding
-        super().save(*args, **kwargs)
-    
-        if creating:
-        # Generate a random password for new members
-            password = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-        
-        # Check if user already exists
-            user_exists = User.objects.filter(username=self.member_id).exists()
-        
-            if user_exists:
-            # Update existing user
-                user = User.objects.get(username=self.member_id)
-                user.set_password(password)
-                user.email = self.email or ''
-                user.first_name = self.first_name
-                user.last_name = self.last_name
-                user.save()
-            else:
-            # Create new user
-                User.objects.create_user(
-                    username=self.member_id,
-                    password=password,
-                    email=self.email or '',
-                    first_name=self.first_name,
-                    last_name=self.last_name,
-                    is_staff=False,
-                    is_active=True
-                )
-        
-        # Store the password temporarily
-            self.temp_password = password
-            self.password_generated_at = timezone.now()
-        
-        # Save again to store password info
-            super().save(update_fields=['temp_password', 'password_generated_at'])
-    
     temp_password = models.CharField(max_length=6, blank=True, null=True)
     password_generated_at = models.DateTimeField(null=True, blank=True)
+    
+    def set_default_password(self):
+        """Set last name as password with basic complexity requirements"""
+        last_name = self.last_name.strip()
+        
+        # Ensure password meets Django's requirements
+        if not last_name:
+            last_name = "TempPass123"  # Fallback if last name is empty
+        
+        # Add numbers if too short (Django requires at least 8 chars)
+        if len(last_name) < 8:
+            last_name = f"{last_name}123"
+        
+        self.temp_password = last_name
+        self.password_generated_at = timezone.now()
+        return last_name
     
     def generate_temp_password(self):
         """Generate a new temporary password"""
@@ -127,6 +87,79 @@ class Member(models.Model):
             return self.temp_password
         return None
 
+    def clean(self):
+        """Validate that last name meets minimum password requirements"""
+        super().clean()
+        if len(self.last_name.strip()) < 1:  # At least 1 character
+            raise ValidationError({'last_name': 'Last name must not be empty'})
+
+    def set_default_password(self):
+        """Set the exact last name as password"""
+        last_name = self.last_name.strip()
+        self.temp_password = last_name
+        self.password_generated_at = timezone.now()
+        return last_name
+
+    def create_user_account(self):
+        """Create or update user account with last name as password"""
+        password = self.set_default_password()
+        
+        user, created = User.objects.get_or_create(
+            username=self.member_id,
+            defaults={
+                'password': make_password(password),
+                'email': self.email or '',
+                'first_name': self.first_name,
+                'last_name': self.last_name,
+                'is_staff': False,
+                'is_active': True
+            }
+        )
+        
+        if not created:
+            user.set_password(password)
+            user.email = self.email or ''
+            user.first_name = self.first_name
+            user.last_name = self.last_name
+            user.save()
+        
+        return password
+
+    def save(self, *args, **kwargs):
+        # Convert empty email to None before saving
+        if self.email == "":
+            self.email = None
+        
+        self.clean()  # Run validation
+        
+        creating = self._state.adding
+        super().save(*args, **kwargs)
+        
+        if creating:
+            self.create_user_account()
+            super().save(update_fields=['temp_password', 'password_generated_at'])
+        
+        # Update user account if name changed
+        elif self.pk:
+            old_member = Member.objects.get(pk=self.pk)
+            if (self.first_name != old_member.first_name or 
+                self.last_name != old_member.last_name or
+                self.email != old_member.email):
+                
+                try:
+                    user = User.objects.get(username=self.member_id)
+                    user.first_name = self.first_name
+                    user.last_name = self.last_name
+                    user.email = self.email or ''
+                    
+                    # Update password if last name changed
+                    if self.last_name != old_member.last_name:
+                        user.set_password(self.set_default_password())
+                    
+                    user.save()
+                except User.DoesNotExist:
+                    pass
+        
 class Event(models.Model):
     name = models.CharField(max_length=200)
     date = models.DateField()

@@ -33,6 +33,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.urls import reverse
+from django.core.exceptions import ValidationError
 import json
 from io import BytesIO
 from django.core.files.base import ContentFile
@@ -137,29 +138,40 @@ def attendee_dashboard(request):
             status__in=['present', 'late']
         ).exists()
     
-    # Get upcoming events (next 7 days) where member is absent
     today = timezone.now().date()
+    seven_days_later = today + timedelta(days=7)
+    
+    # Get all events in the next 7 days
     upcoming_events = Event.objects.filter(
         date__gte=today,
-        date__lte=today + timedelta(days=7)
+        date__lte=seven_days_later
     ).order_by('date', 'start_time')
     
-    # Filter for events where member is absent
-    absent_events = []
-    for event in upcoming_events:
-        if not Attendance.objects.filter(event=event, member=member, status__in=['present', 'late']).exists():
-            absent_events.append(event)
-    
-    # Get attendance history (last 10 records)
+    # Get attendance history (all events, ordered by date)
     attendance_history = Attendance.objects.filter(
         member=member
-    ).select_related('event').order_by('-event__date')[:10]
+    ).select_related('event').order_by('-event__date')
+    
+    # For events that have passed but don't have attendance records, mark as absent
+    past_events = Event.objects.filter(
+        date__lt=today
+    ).exclude(
+        attendance__member=member
+    ).order_by('-date')
+    
+    for event in past_events:
+        # Create absent records for past events without attendance
+        Attendance.objects.get_or_create(
+            event=event,
+            member=member,
+            defaults={'status': 'absent'}
+        )
     
     context = {
         'member': member,
         'current_event_qr': current_event_qr,
-        'is_present': is_present,  # Add this flag
-        'upcoming_events': absent_events,
+        'is_present': is_present,
+        'upcoming_events': upcoming_events,
         'attendance_history': attendance_history,
         'page_title': 'Attendee Dashboard'
     }
@@ -176,18 +188,6 @@ def home(request):
     
     # Get recent events for the activity section
     recent_events = Event.objects.order_by('-date')[:5]
-    
-    # Add stats to each event
-    for event in recent_events:
-        total = Member.objects.count()
-        present = Attendance.objects.filter(event=event, status='present').count()
-        late = Attendance.objects.filter(event=event, status='late').count()
-        absent = total - present - late
-        
-        event.present_count = present
-        event.late_count = late
-        event.absent_count = absent
-        event.total_members = total
     
     # Calculate attendance stats for the most recent event
     if recent_events:
@@ -318,12 +318,22 @@ def event_detail(request, pk):
 
 @login_required
 def member_list(request):
+    sort_by = request.GET.get('sort', 'name')
     members = Member.objects.annotate(
         attendance_count=Count('attendance')
     ).order_by('last_name', 'first_name')
+
+    if sort_by == 'id':
+        members = members.order_by('member_id')
+    elif sort_by == 'section':
+        members = members.order_by('section', 'last_name', 'first_name')
+    else:
+        members = members.order_by('last_name', 'first_name')
+    
     return render(request, 'member_list.html', {
         'members': members,
-        'page_title': 'Member Directory'
+        'page_title': 'Member Directory',
+        'current_sort': sort_by
     })
 
 @login_required
@@ -373,45 +383,25 @@ def manage_member(request, member_id=None):
                     member = form.save(commit=False)
                     if form.cleaned_data['email'] == "":
                         member.email = None
+                    
+                    # Set last name as password
+                    password = member.create_user_account()
                     member.save()
                     
                     if action == 'Add':
-                        # Generate random password
-                        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-                        
-                        # Create user account or update existing one
-                        user, created = User.objects.get_or_create(
-                            username=member.member_id,
-                            defaults={
-                                'password': make_password(password),
-                                'email': member.email or '',
-                                'first_name': member.first_name,
-                                'last_name': member.last_name,
-                                'is_staff': False,
-                                'is_active': True
-                            }
-                        )
-                        
-                        if not created:
-                            # Update existing user
-                            user.set_password(password)
-                            user.email = member.email or ''
-                            user.first_name = member.first_name
-                            user.last_name = member.last_name
-                            user.save()
-                        
-                        # Store the temporary password
-                        member.temp_password = password
-                        member.password_generated_at = timezone.now()
-                        member.save()
-                        
-                        messages.success(request, f'Member created successfully!')
-                        messages.info(request, f'Generated password: {password}')
+                        messages.success(request, (
+                            f'Member {member.get_full_name()} created successfully! '
+                            f'Password: "{member.last_name}" (last name)'
+                        ))
+                    else:
+                        messages.success(request, 'Member updated successfully!')
                     
                     return redirect('eqrApp:member_list')
                     
             except IntegrityError as e:
                 messages.error(request, f'Error saving member: {str(e)}')
+            except ValidationError as e:
+                messages.error(request, f'Validation error: {e}')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -458,11 +448,21 @@ def delete_member(request, member_id):
     return JsonResponse({'status': 'success'})
 
 @login_required
-def event_list(request):
-    events = Event.objects.order_by('-date')
+def event_list(request): #edited 052625
+    sort_by = request.GET.get('sort', 'date')
+    
+    events = Event.objects.all()
+
+    if sort_by == 'name':
+        events = events.order_by('name', 'date')
+    elif sort_by == 'time':
+        events = events.order_by('date', 'start_time')
+    else: 
+        events = events.order_by('-date', 'start_time')
     return render(request, 'event_list.html', {
         'events': events,
-        'page_title': 'All Events'
+        'page_title': 'All Events',
+        'current_sort': sort_by
     })
 
 @login_required
@@ -488,7 +488,6 @@ def bulk_edit_attendance(request, event_id):
         'page_title': f'Edit Attendance - {event.name}'
     })
 
-# In views.py - update save_bulk_attendance
 @login_required
 @require_http_methods(["POST"])
 def save_bulk_attendance(request, event_id):
@@ -502,38 +501,28 @@ def save_bulk_attendance(request, event_id):
             status = request.POST.get(status_key)
 
             if status in ['present', 'absent', 'late']:
-                # For manual updates, we'll use the current time as timestamp
                 attendance, created = Attendance.objects.update_or_create(
                     event=event,
                     member=member,
-                    defaults={
-                        'status': status,
-                        'timestamp': timezone.now()  # Use current time for manual updates
-                    }
+                    defaults={'status': status}
                 )
                 count_updated += 1
     
     messages.success(request, f'Successfully updated attendance for {count_updated} members!')
     return redirect('eqrApp:event_detail', pk=event_id)
 
-# In views.py - update event_attendance_stats
 @login_required
 def event_attendance_stats(request, event_id):
     event = get_object_or_404(Event, pk=event_id)
     total_members = Member.objects.count()
     
-    present_count = Attendance.objects.filter(event=event, status='present').count()
-    late_count = Attendance.objects.filter(event=event, status='late').count()
-    absent_count = total_members - present_count - late_count
-    
     data = {
-        'present': present_count,
-        'late': late_count,
-        'absent': absent_count,
-        'total_members': total_members,
-        'present_percentage': round((present_count / total_members) * 100) if total_members > 0 else 0,
-        'late_percentage': round((late_count / total_members) * 100) if total_members > 0 else 0,
-        'absent_percentage': round((absent_count / total_members) * 100) if total_members > 0 else 0
+        'present': Attendance.objects.filter(event=event, status='present').count(),
+        'late': Attendance.objects.filter(event=event, status='late').count(),
+        'absent': total_members - Attendance.objects.filter(
+            event=event, 
+            status__in=['present', 'late']
+        ).count()
     }
     
     return JsonResponse(data)
@@ -575,17 +564,14 @@ def generate_event_qr(request, event_id):
                 'event_date': event.date.strftime('%Y-%m-%d'),
                 'event_start_time': event.start_time.strftime('%H:%M') if event.start_time else None,
                 'event_end_time': event.end_time.strftime('%H:%M') if event.end_time else None,
-                'timestamp': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
             }
-            
-
+                 
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_L,
                 box_size=10,
                 border=4,
             )
-             # Use encrypted data
             qr.add_data(json.dumps(qr_data))  # Encode as JSON string
             qr.make(fit=True)
             

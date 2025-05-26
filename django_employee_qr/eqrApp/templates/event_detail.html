@@ -33,7 +33,7 @@
                         <h2>{{ event.date }}</h2>
                         <h2>
                             {% if event.start_time and event.end_time %}
-                                {{ event.start_time|time:"H:i" }} - {{ event.end_time|time:"H:i" }}
+                                {{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}
                             {% else %}
                                 Not specified
                             {% endif %}
@@ -85,7 +85,7 @@
                                 {{ attendance.member.get_full_name }}
                             </div>
                             <div class="attendee-timedata">
-                                {{ attendance.timestamp|date:"H:i" }}
+                                {{ attendance.timestamp|date:"g:i A" }}
                             </div>
                             <div class="attendee-statusdata">
                                 <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}bg-danger{% endif %}">

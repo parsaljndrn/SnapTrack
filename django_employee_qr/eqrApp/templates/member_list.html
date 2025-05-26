@@ -20,6 +20,17 @@
     </div>
   </header>
 
+  <div class="ml-sort mb-3" style="margin-top: 1rem;">
+    <form method="get" id="sortForm" class="d-inline">
+        <label for="sortSelect" class="form-label me-2">Sort by:</label>
+        <select name="sort" id="sortSelect" class="form-select d-inline w-auto" onchange="document.getElementById('sortForm').submit()">
+            <option value="date" {% if current_sort == 'date' %}selected{% endif %}>Date</option>
+            <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
+            <option value="time" {% if current_sort == 'time' %}selected{% endif %}>Time</option>
+        </select>
+    </form>
+  </div>
+
   <div id="messageContainer"></div>
 
   <div class="ml-card">

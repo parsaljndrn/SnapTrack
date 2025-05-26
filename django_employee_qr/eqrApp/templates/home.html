@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/home-design.css' %}">
+<link rel="stylesheet" href="{% static 'css/home-design.css' %}?v={{now}}">
 {% endblock %}
 
 {% block content %}
@@ -56,17 +56,13 @@
     </div>
 </div>
 
-<!-- Attendance Summary Section -->
+<!-- Attendance Summary Sectionv (edited 052625 - 1830H) -->
 <div class="dashboard-container">
     <div class="card" style="flex: 1 1 100%; max-width: 100%;">
         <label for="event-select"><i class="fa-solid fa-clipboard"></i> Attendance Summary</label>
         <select id="event-select">
             {% for event in recent_events %}
-            <option value="{{ event.pk }}" 
-                    data-present="{{ event.present_count }}"
-                    data-late="{{ event.late_count }}"
-                    data-absent="{{ event.absent_count }}"
-                    data-total="{{ event.total_members }}">
+            <option value="{{ event.pk }}">
                 {{ event.name }}
             </option>
             {% endfor %}
@@ -75,19 +71,16 @@
         <div class="status-cards">
             <div class="status present">
                 Present
-                <p id="present-count">{{ present_count }}</p>
+                <p id="present-count">0</p>
             </div>
             <div class="status absent">
                 Absent
-                <p id="absent-count">{{ absent_count }}</p>
+                <p id="absent-count">0</p>
             </div>
             <div class="status late">
                 Late
-                <p id="late-count">{{ late_count }}</p>
+                <p id="late-count">0</p>
             </div>
-        </div>
-        <div class="total-members">
-            Total Members: <span id="total-members">{{ total_members }}</span>
         </div>
     </div>
 </div>
@@ -100,52 +93,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const presentCount = document.getElementById('present-count');
     const absentCount = document.getElementById('absent-count');
     const lateCount = document.getElementById('late-count');
-    const totalMembers = document.getElementById('total-members');
 
-    // Handle dropdown change
-    eventSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        
-        // Update counts
-        presentCount.textContent = selectedOption.dataset.present;
-        absentCount.textContent = selectedOption.dataset.absent;
-        lateCount.textContent = selectedOption.dataset.late;
-        totalMembers.textContent = selectedOption.dataset.total;
-    });
+    function updateAttendanceStats(eventId) {
+        // Show loading or reset while fetching
+        presentCount.textContent = '...';
+        absentCount.textContent = '...';
+        lateCount.textContent = '...';
 
-    // Make event links in Recent Activity update the stats too
-    document.querySelectorAll('.event-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const eventId = this.dataset.eventId;
-            
-            // Find the matching option in the dropdown
-            const option = document.querySelector(`#event-select option[value="${eventId}"]`);
-            if (option) {
-                eventSelect.value = eventId;
-                
-                // Trigger the change event
-                const event = new Event('change');
-                eventSelect.dispatchEvent(event);
-                
-                // Navigate to the event detail page
-                window.location.href = this.href;
-            }
-        });
-    });
-    eventSelect.addEventListener('change', function() {
-        const eventId = this.value;
-        
         fetch(`/api/events/${eventId}/attendance/`)
             .then(response => response.json())
             .then(data => {
                 presentCount.textContent = data.present;
                 absentCount.textContent = data.absent;
                 lateCount.textContent = data.late;
-                totalMembers.textContent = data.total_members;
+            })
+            .catch(() => {
+                presentCount.textContent = '0';
+                absentCount.textContent = '0';
+                lateCount.textContent = '0';
             });
+    }
+
+    // Initial load for the first event
+    if (eventSelect.value) {
+        updateAttendanceStats(eventSelect.value);
+    }
+
+    eventSelect.addEventListener('change', function() {
+        updateAttendanceStats(this.value);
     });
-    
+
+    // Optional: update stats when clicking recent activity links (without redirect)
+    document.querySelectorAll('.event-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const eventId = this.dataset.eventId;
+            const option = document.querySelector(`#event-select option[value="${eventId}"]`);
+            if (option) {
+                eventSelect.value = eventId;
+                updateAttendanceStats(eventId);
+            }
+            // If you want to redirect after updating, uncomment below:
+            // setTimeout(() => { window.location.href = this.href; }, 300);
+        });
+    });
 });
 </script>
 {% endblock %}

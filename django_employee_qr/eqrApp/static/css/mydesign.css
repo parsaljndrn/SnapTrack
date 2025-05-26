@@ -202,10 +202,6 @@ html, body{
 }
 
 /* event_list.html */
-.event_list{
-    display: grid;
-    grid-template-rows: 1fr 4fr;
-}
 .allevents-title{
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -217,7 +213,7 @@ html, body{
 .allevents{
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     margin-left: 30px;
-    color: #137FC3;
+    color: #721c24;
 }
 .btn-create-event-text{
     text-decoration: none;

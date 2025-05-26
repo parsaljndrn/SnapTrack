@@ -5,49 +5,7 @@ html, body{
 }
 
 /* base.html */
-.navbar{
-    background: linear-gradient(to bottom right, #3BA8E9, #0F0D56);
-    height: 100px; 
-    display: grid; 
-    grid-template-columns: 7fr 1fr 1fr 1fr 1fr;
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 0 25px;
-    font-weight: bold;
-    font-size: 16px;
-    text-decoration: none;
-    color: white;
-}
 
-.navbar-brand, .nav-link{
-    color: white;
-}
-
-.homelogo{
-    display: flex; 
-    align-items: right; 
-    justify-content: left;
-}
-.membersbtn{
-    display: flex; 
-    align-items: right; 
-    justify-content: center;
-}
-
-.btn-outline-light{
-    border-radius: 5px;
-    background-color: white;
-    border: none;
-    width: 80px;
-    height: 20px;
-}
-
-.homie{display: flex; align-items: right; justify-content: center;}
-.membersbtn{display: flex; align-items: right; justify-content: center;}
-.eventsbtn{display: flex; align-items: right; justify-content: center;}
-.homieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
-.memberieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
-.eventieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
 
 /* myloginpage.html */
 .login-body{
