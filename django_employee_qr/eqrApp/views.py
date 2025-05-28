@@ -125,52 +125,40 @@ def attendee_dashboard(request):
         logout(request)
         messages.error(request, "Member account not found")
         return redirect('eqrApp:login')
-    
-    # Get the most recent event with a QR code for this member
-    current_event_qr = QRCode.objects.filter(member=member).select_related('event').order_by('-event__date').first()
-    
-    # Check if member is already marked present for the current event
-    is_present = False
-    if current_event_qr:
-        is_present = Attendance.objects.filter(
-            event=current_event_qr.event,
-            member=member,
-            status__in=['present', 'late']
-        ).exists()
+
+    selected_event = None
+    selected_event_qr = None
+    event_id = request.GET.get('event_id')
+    if event_id:
+        try:
+            selected_event = Event.objects.get(id=event_id)
+            try:
+                selected_event_qr = QRCode.objects.get(member=member, event=selected_event)
+            except QRCode.DoesNotExist:
+                selected_event_qr = None
+        except Event.DoesNotExist:
+            pass
     
     today = timezone.now().date()
     seven_days_later = today + timedelta(days=7)
     
-    # Get all events in the next 7 days
+    # Get all events in the next 7 days that the member hasn't attended yet
     upcoming_events = Event.objects.filter(
         date__gte=today,
         date__lte=seven_days_later
+    ).exclude(
+        attendance__member=member,
+        attendance__status__in=['present', 'late']
     ).order_by('date', 'start_time')
     
-    # Get attendance history (all events, ordered by date)
     attendance_history = Attendance.objects.filter(
         member=member
     ).select_related('event').order_by('-event__date')
     
-    # For events that have passed but don't have attendance records, mark as absent
-    past_events = Event.objects.filter(
-        date__lt=today
-    ).exclude(
-        attendance__member=member
-    ).order_by('-date')
-    
-    for event in past_events:
-        # Create absent records for past events without attendance
-        Attendance.objects.get_or_create(
-            event=event,
-            member=member,
-            defaults={'status': 'absent'}
-        )
-    
     context = {
         'member': member,
-        'current_event_qr': current_event_qr,
-        'is_present': is_present,
+        'selected_event_qr': selected_event_qr,
+        'selected_event': selected_event,
         'upcoming_events': upcoming_events,
         'attendance_history': attendance_history,
         'page_title': 'Attendee Dashboard'
@@ -458,7 +446,7 @@ def event_list(request): #edited 052625
     elif sort_by == 'time':
         events = events.order_by('date', 'start_time')
     else: 
-        events = events.order_by('-date', 'start_time')
+        events = events.order_by('date', '-start_time')
     return render(request, 'event_list.html', {
         'events': events,
         'page_title': 'All Events',
@@ -524,7 +512,6 @@ def event_attendance_stats(request, event_id):
             status__in=['present', 'late']
         ).count()
     }
-    
     return JsonResponse(data)
 
 @login_required

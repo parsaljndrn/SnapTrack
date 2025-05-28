@@ -8,12 +8,12 @@
             <i class="fas fa-plus"></i>Create New Event
         </a></div>
 
-        <div class="ml-sort mb-3" style="margin-top: 1rem;">
+        <div class="sort-event" style="margin-top: 1rem;">
             <form method="get" id="sortForm" class="d-inline">
-                <label for="sortSelect" class="form-label me-2">Sort by:</label>
-                <select name="sort" id="sortSelect" class="form-select d-inline w-auto" onchange="document.getElementById('sortForm').submit()">
-                    <option value="date" {% if current_sort == 'date' %}selected{% endif %}>Date</option>
+                <label for="sortSelect" class="sort-label">Sort by:</label>
+                <select name="sort" id="sortSelect" class="sorting" onchange="document.getElementById('sortForm').submit()">
                     <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
+                    <option value="date" {% if current_sort == 'date' %}selected{% endif %}>Date</option>
                     <option value="time" {% if current_sort == 'time' %}selected{% endif %}>Time</option>
                 </select>
             </form>
