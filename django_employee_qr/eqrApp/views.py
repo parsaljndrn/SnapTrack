@@ -140,12 +140,11 @@ def attendee_dashboard(request):
             pass
     
     today = timezone.now().date()
-    seven_days_later = today + timedelta(days=7)
+    days_later = today + timedelta(days=14)
     
-    # Get all events in the next 7 days that the member hasn't attended yet
     upcoming_events = Event.objects.filter(
         date__gte=today,
-        date__lte=seven_days_later
+        date__lte=days_later
     ).exclude(
         attendance__member=member,
         attendance__status__in=['present', 'late']
@@ -500,30 +499,34 @@ def save_bulk_attendance(request, event_id):
     return redirect('eqrApp:event_detail', pk=event_id)
 
 @login_required
-def event_attendance_stats(request, event_id):
-    event = get_object_or_404(Event, pk=event_id)
-    total_members = Member.objects.count()
+def home(request):
+    # Redirect non-staff users to attendee dashboard
+    if not request.user.is_staff:
+        return redirect('eqrApp:attendee_dashboard')
     
-    # Get counts for each status
-    present_count = Attendance.objects.filter(event=event, status='present').count()
-    late_count = Attendance.objects.filter(event=event, status='late').count()
-    absent_count = total_members - (present_count + late_count)
+    today = timezone.now().date()
+    recent_events = Event.objects.order_by('-date')[:5]
     
-    # Calculate percentages
-    present_percentage = round((present_count / total_members) * 100) if total_members > 0 else 0
-    late_percentage = round((late_count / total_members) * 100) if total_members > 0 else 0
-    absent_percentage = round((absent_count / total_members) * 100) if total_members > 0 else 0
+    # Calculate stats for each recent event
+    for event in recent_events:
+        total_members = Member.objects.count()
+        event.present_count = Attendance.objects.filter(event=event, status='present').count()
+        event.late_count = Attendance.objects.filter(event=event, status='late').count()
+        event.absent_count = total_members - event.present_count - event.late_count
+        event.total_members = total_members
     
-    data = {
-        'present': present_count,
-        'late': late_count,
-        'absent': absent_count,
-        'present_percentage': present_percentage,
-        'late_percentage': late_percentage,
-        'absent_percentage': absent_percentage,
-        'total_members': total_members
+    context = {
+        'page_title': 'Facilitator Dashboard',
+        'members_count': Member.objects.count(),
+        'events_count': Event.objects.count(),
+        'recent_events': recent_events,
+        'present_count': recent_events[0].present_count if recent_events else 0,
+        'late_count': recent_events[0].late_count if recent_events else 0,
+        'absent_count': recent_events[0].absent_count if recent_events else 0,
+        'total_members': recent_events[0].total_members if recent_events else Member.objects.count(),
     }
-    return JsonResponse(data)
+    return render(request, 'home.html', context)
+
 
 
 @login_required
