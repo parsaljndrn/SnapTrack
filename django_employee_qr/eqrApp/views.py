@@ -504,13 +504,24 @@ def event_attendance_stats(request, event_id):
     event = get_object_or_404(Event, pk=event_id)
     total_members = Member.objects.count()
     
+    # Get counts for each status
+    present_count = Attendance.objects.filter(event=event, status='present').count()
+    late_count = Attendance.objects.filter(event=event, status='late').count()
+    absent_count = total_members - (present_count + late_count)
+    
+    # Calculate percentages
+    present_percentage = round((present_count / total_members) * 100) if total_members > 0 else 0
+    late_percentage = round((late_count / total_members) * 100) if total_members > 0 else 0
+    absent_percentage = round((absent_count / total_members) * 100) if total_members > 0 else 0
+    
     data = {
-        'present': Attendance.objects.filter(event=event, status='present').count(),
-        'late': Attendance.objects.filter(event=event, status='late').count(),
-        'absent': total_members - Attendance.objects.filter(
-            event=event, 
-            status__in=['present', 'late']
-        ).count()
+        'present': present_count,
+        'late': late_count,
+        'absent': absent_count,
+        'present_percentage': present_percentage,
+        'late_percentage': late_percentage,
+        'absent_percentage': absent_percentage,
+        'total_members': total_members
     }
     return JsonResponse(data)
 
