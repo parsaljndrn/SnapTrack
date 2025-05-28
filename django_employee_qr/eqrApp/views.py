@@ -514,20 +514,6 @@ def event_attendance_stats(request, event_id):
     }
     return JsonResponse(data)
 
-@login_required
-def view_credentials(request, member_id):
-    member = get_object_or_404(Member, member_id=member_id)
-    
-    # Generate new password if needed
-    if request.user.is_staff and not member.get_current_password():
-        member.generate_temp_password()
-    
-    context = {
-        'member': member,
-        'is_staff': request.user.is_staff,
-        'current_password': member.get_current_password() or 'Not available'
-    }
-    return render(request, 'view_credentials.html', context)
 
 @login_required
 def generate_event_qr(request, event_id):

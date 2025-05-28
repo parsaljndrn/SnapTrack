@@ -217,7 +217,7 @@ html, body{
 }
 .btn-create-event-text{
     text-decoration: none;
-    margin-left: 200px;
+    margin-left: 80px;
     width: 150px;
     height: 20px;
     display: inline-block;
@@ -317,6 +317,26 @@ html, body{
     height: 20;
 }
 
+.sort-event{
+    text-align: center;
+    justify-content: center;
+    align-content: center;
+    margin-left: 280px;
+    margin-bottom: 20px;
+    width: 400px;
+}
+.sort-label{
+    font-size: xx-large;
+    color: #0F0D56;
+    margin-right: 15px;
+}
+.sorting{
+    width: 200px;
+    padding: 8px;
+    background-color: none;
+    border-radius: 10px;
+    border: none;
+}
 /* create_event.html */
 .create_event_card{
     max-width: 700px;           

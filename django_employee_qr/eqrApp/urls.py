@@ -31,7 +31,6 @@ urlpatterns = [
     
     #path('accounts/login/', views.custom_login, name='login'),
     path('members/manage/<str:member_id>/', views.manage_member, name='manage_member'),
-    path('members/view/<str:member_id>/', views.view_credentials, name='view_credentials'),
     path('members/mass_delete/', views.mass_delete_members, name='mass_delete_members'),
     #member dashboard (member logging in, not redirecting here: check views)
     #log out url
