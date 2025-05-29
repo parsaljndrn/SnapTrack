@@ -28,3 +28,7 @@ python-decouple>=3.6
 # Additional Web Development Tools
 requests>=2.28.0
 urllib3>=1.26.0
+
+# Testing and Development
+gunicorn>=20.1.0
+whitenoise>=6.0.0  # For better static file serving

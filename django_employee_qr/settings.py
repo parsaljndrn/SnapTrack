@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -61,10 +62,10 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'django_employee_qr.urls'
 
-ENCRPTION_KEY = 'Suntukan'
+ENCRYPTION_KEY = 'Suntukan'
 
-# QR Code Encryption Key - Generate a new one for production
-QR_ENCRYPTION_KEY = 'K8-7wJxlLRmn4lKm-yFX3_8tJhCQcvJgkY8wFqP7-A8='  # Generate new key in production
+# QR Code Encryption Key
+QR_ENCRYPTION_KEY = 'K8-7wJxlLRmn4lKm-yFX3_8tJhCQcvJgkY8wFqP7-A8='
 
 TEMPLATES = [
     {
