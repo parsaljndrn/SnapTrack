@@ -1,0 +1,30 @@
+# Core Django Framework
+Django>=4.2,<5.0
+
+# Image Processing and QR Code Generation
+Pillow>=9.0.0
+django-qr-code>=3.1.0
+qrcode[pil]>=7.0.0
+
+# Security and Cryptography
+cryptography>=3.4.0
+
+# PDF Generation and Reporting
+reportlab>=3.6.0
+
+# Excel and Data Export
+openpyxl>=3.1.0
+xlsxwriter>=3.1.0
+
+# User Interface and Forms
+django-bootstrap4>=23.1
+django-crispy-forms>=1.14.0
+crispy-bootstrap4>=1.0.0
+
+# Utilities and Configuration
+python-dateutil>=2.8.2
+python-decouple>=3.6
+
+# Additional Web Development Tools
+requests>=2.28.0
+urllib3>=1.26.0

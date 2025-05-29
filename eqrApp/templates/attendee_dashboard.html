@@ -1,0 +1,172 @@
+{% extends 'base_attendee.html' %}
+
+{% block content %}
+<div class="dashboard-container">
+
+    <h2 class="section-title">Your QR Code</h2>
+    <div class="dashboard-section">
+        {% if selected_event_qr %}
+            <div class="card">
+                <div class="card-header">
+                    {{ selected_event_qr.event.name }}<br>
+                    <span class="date">{{ selected_event_qr.event.date|date:"M d, Y" }}</span>
+                </div>
+                <div class="card-body" id="qr-code-container">
+                    <div class="loading-message">Loading QR code...</div>
+                </div>
+                <div class="card-footer">
+                    {% if selected_event_qr.event.start_time and selected_event_qr.event.end_time %}
+                        {{ selected_event_qr.event.start_time|time:"g:i A" }} - {{ selected_event_qr.event.end_time|time:"g:i A" }}
+                    {% else %}
+                        All day
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <div class="card mt-2">
+                <div class="card-body text-center text-muted">
+                    {% if selected_event %}
+                        No QR code available for {{ selected_event.name }}. Please check back later or contact your facilitator.
+                    {% else %}
+                        Select an upcoming event to view its QR code.
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <h2 class="section-title">Your Upcoming Events</h2>
+    <div class="dashboard-section">
+        {% if upcoming_events %}
+            {% for event in upcoming_events %}
+                <div class="event-box {% if selected_event and selected_event.id == event.id %}active{% endif %}" 
+                     data-event-id="{{ event.id }}">
+                    <span>{{ event.name }} - {{ event.date|date:"M d, Y" }}</span>
+                    <span class="event-time">
+                        {% if event.start_time and event.end_time %}
+                            {{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}
+                        {% else %}
+                            All day
+                        {% endif %}
+                    </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="event-box text-muted">
+                <span>No upcoming events</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <h2 class="section-title">Your Attendance History</h2>
+    <div class="dashboard-section">
+        {% if attendance_history %}
+            {% for attendance in attendance_history %}
+                <div class="attendance-box">
+                    <span>{{ attendance.event.name }} - {{ attendance.event.date|date:"M d, Y" }}</span>
+                    <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}absent{% endif %}">
+                        {{ attendance.status|title }}
+                    </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="attendance-box text-muted">
+                <span>No attendance records</span>
+            </div>
+        {% endif %}
+    </div>
+
+</div>
+
+{# Store Django data in a JSON script tag for safe JavaScript access #}
+{{ block.super }}
+<script id="django-data" type="application/json">
+{
+    "selectedEventId": {% if selected_event %}{{ selected_event.id }}{% else %}null{% endif %},
+    "hasSelectedEvent": {% if selected_event %}true{% else %}false{% endif %}
+}
+</script>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Safely retrieve Django data from the JSON script tag
+    const djangoData = JSON.parse(document.getElementById('django-data').textContent);
+    
+    // Handle event box clicks for navigation
+    const eventBoxes = document.querySelectorAll('.event-box');
+    
+    eventBoxes.forEach(box => {
+        box.addEventListener('click', function() {
+            const eventId = this.getAttribute('data-event-id');
+            if (eventId) {
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.set('event_id', eventId);
+                window.location.href = newUrl.toString();
+            }
+        });
+    });
+    
+    // Load QR code if an event is selected
+    // This is now safe JavaScript that won't cause syntax errors
+    if (djangoData.hasSelectedEvent && djangoData.selectedEventId) {
+        loadQRCode(djangoData.selectedEventId);
+    }
+});
+
+function loadQRCode(eventId) {
+    const container = document.getElementById('qr-code-container');
+    if (!container) {
+        console.error('QR code container not found');
+        return;
+    }
+    
+    // Show loading state while fetching QR code
+    container.innerHTML = '<div class="loading-message">Loading QR code...</div>';
+    
+    // Fetch the QR code data from the server
+    fetch(`/accounts/events/${eventId}/get-qr/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Successfully received QR code data
+                container.innerHTML = `
+                    <img src="${data.qr_code}" alt="QR Code" class="qr-img" style="max-width: 100%; height: auto;">
+                    <div class="qr-info" style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                        <div><strong>Event:</strong> ${data.event_name}</div>
+                        <div><strong>Date:</strong> ${data.event_date}</div>
+                        <div><strong>Time:</strong> ${data.event_time}</div>
+                        <div style="margin-top: 8px; padding: 8px; background-color: #f0f8ff; border-radius: 4px; font-size: 0.8em;">
+                            <i class="fas fa-shield-alt" style="color: #007bff;"></i>
+                            <strong>Encrypted QR Code</strong> - Secure attendance tracking
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Server returned an error
+                container.innerHTML = `
+                    <div class="alert alert-warning text-center">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Unable to load QR code: ${data.error || 'Unknown error'}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading QR code:', error);
+            container.innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <i class="fas fa-times-circle"></i>
+                    Error loading QR code. Please refresh the page or contact support.
+                </div>
+            `;
+        });
+}
+</script>
+{% endblock %}
+{% endblock %}

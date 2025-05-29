@@ -1,0 +1,424 @@
+html, body{
+    height: 100%;
+    margin: 0;
+    font-family: 'Inter';
+}
+
+/* base.html */
+.navbar{
+    background: linear-gradient(to bottom right, #3BA8E9, #0F0D56);
+    height: 100px; 
+    display: grid; 
+    grid-template-columns: 7fr 1fr 1fr 1fr 1fr;
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 0 25px;
+    font-weight: bold;
+    font-size: 16px;
+    text-decoration: none;
+    color: white;
+}
+
+.navbar-logo{
+    position: absolute;
+}
+
+.navbar-brand, .nav-link{
+    color: white;
+}
+
+.homelogo{
+    display: flex; 
+    align-items: right; 
+    justify-content: left;
+}
+.membersbtn{
+    display: flex; 
+    align-items: right; 
+    justify-content: center;
+}
+
+.btn-outline-light{
+    border-radius: 5px;
+    background-color: white;
+    border: none;
+    width: 80px;
+    height: 20px;
+}
+
+.homie{display: flex; align-items: right; justify-content: center;}
+.membersbtn{display: flex; align-items: right; justify-content: center;}
+.eventsbtn{display: flex; align-items: right; justify-content: center;}
+.homieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+.memberieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+.eventieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
+
+
+/* myloginpage.html */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 8px 12px;
+    margin-top: 5px;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 14px;
+    animation: slideDown 0.3s ease-out;
+}
+
+.login-body{
+    background: linear-gradient(145deg, 
+    #FFFFFF 0%, 
+    #3BA8E9 75%, 
+    #141A6B 100%);
+    background-repeat: no-repeat;
+    background-size: cover;        
+    height: 100vh;                  
+    display: flex;                
+    justify-content: center;        
+    align-items: center;
+}
+
+.login-box{
+    width: 600px;
+    height: 400px;
+    margin: 100px;
+    border-radius: 100px;
+    box-shadow: 6px 6px 10px rgba(255, 255, 255, 0.3);
+    display: grid;
+    grid-template-columns: 2fr 2fr;
+    position: relative;
+    overflow: hidden;
+}
+
+.logo{
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    border-top-right-radius: 70px;
+    border-bottom-right-radius: 70px;
+    width: 100%;
+    background-color: #137FC3;
+    z-index: 2;
+    transition: transform 0.8s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+.logo.slide{
+    transform: translateX(-50%);
+}
+
+.login{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+}
+
+.btnlogin{
+    position: absolute;
+    bottom: 30px;
+    right: 35px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: none;
+    background-color: #CDE1EF;
+    color: black;
+    cursor: pointer;
+}
+
+.logo-img{
+    margin-top: 100px;
+    transition: transform 0.8s ease;
+}
+
+.logo.slide .logo-img {
+    transform: translateX(70%);
+}
+
+.login-username{
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    margin-bottom: 15px;
+    margin-right: 50px;
+}
+
+#id_username , #id_password{
+    padding-left: 15px;
+    color: #888;
+    font-size: 14px;
+    padding-left: 15px;
+}
+
+#id_username:focus , #id_password:focus{
+    color: black;
+}
+
+.form-control{
+    height: 30px;
+    width: 200px;
+    border-radius: 15px;
+    border: transparent;
+    background-color: #CDE1EF;
+}
+
+.login-password{
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    margin-bottom: 15px;
+    margin-right: 50px;
+}
+
+.d-grid{
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    margin-right: 130px;
+}
+
+.btn-lg{
+    border-radius: 10px;
+    background-color: #3BA8E9;
+    border: none;
+    width: 80px;
+    height: 30px;
+    color: white;
+}
+
+/* event_list.html */
+.allevents-title{
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    align-items: center;
+    margin-left: 200px;
+    margin-right: 200px;
+    margin-top: 50px;
+}
+.allevents{
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    margin-left: 30px;
+    color: #721c24;
+}
+.btn-create-event-text{
+    text-decoration: none;
+    margin-left: 80px;
+    width: 150px;
+    height: 20px;
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background-color: #137FC3;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    color: white;
+}
+.btn-create-event-text:hover {
+    background-color: #CDE1EF; 
+    color: #137FC3;
+    border: 1px solid #137FC3;
+    box-shadow: 6px 6px 10px rgba(0, 0, 139, 0.3);
+    transform: translateY(-3px);
+    transition: all 0.3s ease;
+}
+.data-names{
+    background-color: white;
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 1), 0 2px 3px rgba(0, 0, 0, 1);
+    border-radius: 100px;
+    width: 100%;
+}
+.data-names-table{
+    margin-left: 50px;
+    margin-right: 50px;
+}
+.data-rows{
+    margin-left: 50px;
+    border-radius: 100px;
+    width: 100%;
+    display: flex;
+    margin-top: 10px;
+    align-items: center;
+}
+.data-rows-table{
+    margin-right: 60px;
+}
+.table-responsive{
+    margin: 0 auto;
+    padding: 8px;
+    background-color: #CDE1EF;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 1);
+    border-radius: 30px;
+    mix-blend-mode: darken;
+}
+.table-events {
+    width: 97%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    margin-left: 14px;
+    margin-right: 14px;
+}
+
+.table-events th,
+.table-events td {
+    padding: 12px;
+    text-align: left;
+}
+
+.events-box{
+    margin-left: 200px;
+    margin-right: 200px;
+    width: calc(100% - 400px);
+}
+
+.eventname{width: 55%;}
+.eventdate{width: 20%;}
+.eventcreated{width: 20%;}
+.eventactions{width: 10%;}
+
+.eventname-link{width: 50%;}
+.eventdate-link{width: 20%;}
+.eventcreated-link{width: 20%;}
+.eventactions-link{width: 10%; margin-right: 45px;}
+.eventactions-btn{
+    background-color: #137FC3;
+    color: white;
+    border-radius: 10px;
+    padding: 10px;
+    display: inline-block;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+.eventactions-btn:hover{
+    background-color: #CDE1EF;
+    color: #137FC3;
+    border: 1px solid #137FC3;
+    transform: scale(1.1);
+}
+
+.data-rows-else{
+    height: 20;
+}
+
+.sort-event{
+    text-align: center;
+    justify-content: center;
+    align-content: center;
+    margin-left: 280px;
+    margin-bottom: 20px;
+    width: 400px;
+}
+.sort-label{
+    font-size: xx-large;
+    color: #0F0D56;
+    margin-right: 15px;
+}
+.sorting{
+    width: 200px;
+    padding: 8px;
+    background-color: none;
+    border-radius: 10px;
+    border: none;
+}
+/* create_event.html */
+.create_event_card{
+    max-width: 700px;           
+    height: 350px;
+    background-color: #CDE1EF;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+    border-radius: 100px;
+    margin: 5% auto;
+    padding: 10px;
+    overflow: auto;
+    border-radius: 50px;
+}
+.create_event_card-header{
+    align-items: center;
+    margin-top: 30px;
+    margin-left: 50px;
+    height: 50px;
+}
+.card-body{
+    height: 250px;
+    display: flex;
+    position: relative;
+}
+.inside-form-card-body{
+    margin-left: 50px;
+}
+.formname{
+    border-radius: 10px;
+}
+
+.form-control-events{
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    width: 300px;
+    height: 30px;
+    margin: 20px;
+}
+.form-control-time{
+    background-color: white;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin: 20px;
+}
+.saveeventbtn , 
+.btn-cancel-create-event{
+    border-radius: 10px;
+    padding: 7px;
+    background-color: #137FC3;
+    border: 2px solid transparent;
+    color: white;
+} 
+.saveeventbtn:hover{
+    background-color: white;
+    border: 2px solid #137FC3;
+    color: #137FC3;
+}
+#id_name::placeholder{
+    color: white;
+    margin: 10px;
+}
+.btn-cancel-create-event:hover{
+    background-color: white;
+    border: 2px solid #137FC3;
+    color: #137FC3;
+}
+.btn-cancel-create-event{
+    border-radius: 10px;
+    padding: 6px;
+    background-color: #137FC3;
+    border: 2px solid transparent;
+    color: white;
+    text-decoration: none;
+}
+
+.btns button{
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+}
+.btns a{
+    position: absolute;
+    bottom: 0;
+    right: 60px;
+}
