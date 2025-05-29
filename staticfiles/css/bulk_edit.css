@@ -1,91 +1,215 @@
-/* bulk_edit_attendance.html */
-.bulk_edit{
-    color: white;
+.bulk_edit {
+    color: #1C1C1C; 
+    font-family: 'Inter', sans-serif;
+    background-color: #F7FAFC;
+    min-height: 100vh;
+    padding-bottom: 40px;
 }
-.edit-att-header{
+
+.edit-att-header {
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    padding: 40px 100px;
+    padding: 40px 60px;
+    color: white;
+    border-radius: 0 0 28px 28px;
 }
-.edit-att-back{
+
+.edit-att-back {
     position: absolute;
-    left: 100px;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%);
 }
-.edit-att-backbtn{
+
+.edit-att-backbtn {
     background-color: #137FC3;
-    border-radius: 10px;
-    padding: 10px;
+    border-radius: 12px;
+    padding: 10px 20px;
     text-decoration: none;
     color: white;
-    border: 0;
+    font-weight: 600;
     border: 2px solid transparent;
+    box-shadow: 0 2px 6px rgba(30, 144, 255, 0.4);
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
 }
-.edit-att-backbtn:hover{
+
+.edit-att-backbtn:hover {
     background-color: white;
     color: #137FC3;
-    border: 2px solid #137FC3;
+    border-color: #137FC3;
+    box-shadow: none;
 }
-.edit-box{
-    background-color: #137FC3;
-    justify-content: center;
-    flex-wrap: wrap;
-    width: 50vw;
-    margin: 0 auto;
+
+.edit-box {
+    background-color: white;
+    max-width: 900px;
+    width: 90%;
+    margin: 30px auto 0;
     text-align: center;
     box-sizing: border-box;
-    padding: 20px;
-    border-radius: 50px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    padding: 40px 50px;
+    border-radius: 32px;
+    box-shadow: 0 8px 30px rgba(19, 127, 195, 0.12);
 }
-.name-nd-btns{
+
+.name-nd-btns {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    position: relative;
+    margin-bottom: 30px;
+    gap: 20px;
+    flex-wrap: wrap;
 }
-.allpresent{
-    position: absolute;
-    left: 0;
+
+.allpresent, .allabsent {
+    flex: 1 1 160px;
 }
-.allabsent{
-    position: absolute;
-    right: 0;
-}
-.all-btns{
-    padding: 5px;
-    background-color: #CDE1EF;
-    border-radius: 5px;
+
+.all-btns {
+    width: 100%;
+    padding: 14px 0;
+    background-color: #137FC3;
+    border-radius: 8px;
     border: 2px solid transparent;
+    color: white;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 4px 12px rgb(19 127 195 / 0.35);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    user-select: none;
+}
+
+.all-btns i {
+    font-size: 16px;
+}
+
+.all-btns:hover {
+    background-color: white;
+    border-color: #137FC3;
     color: #137FC3;
 }
-.all-btns:hover{
-    background-color: #137FC3;
-    border: 2px solid #CDE1EF;
-    color: #CDE1EF;
 
-}
-.edit-details{
+.edit-details {
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
-}
-.edit-attend-tbl{
-    width: 50vw;
-}
-.edit-attend-tbl th, .edit-attend-tbl td{
-    padding:10px;
-}
-.save-btn{
-    padding:10px;
-    bottom: 0;
     margin-top: 20px;
 }
 
+.edit-attend-tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    font-size: 15px;
+    color: #333333;
+}
+
+.edit-attend-tbl th, .edit-attend-tbl td {
+    padding: 14px 20px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.edit-attend-tbl thead th {
+    background-color: #E3F2FD;
+    font-weight: 700;
+    border-radius: 12px;
+    letter-spacing: 0.04em;
+    color: #137FC3;
+}
+
+.edit-attend-tbl tbody tr {
+    background-color: #F9FAFB;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.07);
+    transition: background-color 0.3s ease;
+}
+
+.edit-attend-tbl tbody tr:hover {
+    background-color: #E3F2FD;
+}
+
+.edit-attend-tbl td {
+    border: none;
+}
+
+.edit-attend-tbl input[type="radio"] {
+    margin-right: 8px;
+    cursor: pointer;
+    transform: scale(1.05);
+    vertical-align: middle;
+}
+
+.edit-attend-tbl label {
+    cursor: pointer;
+    user-select: none;
+    margin-right: 20px;
+    color: #137FC3;
+    font-weight: 600;
+}
+
+.save-btn {
+    padding: 14px 0;
+    margin-top: 40px;
+}
+
+.save-btn .all-btns {
+    width: 260px;
+    background-color: #137FC3;
+    border-radius: 14px;
+    font-size: 17px;
+    font-weight: 700;
+    box-shadow: 0 6px 20px rgb(19 127 195 / 0.4);
+    transition: background-color 0.3s ease;
+}
+
+.save-btn .all-btns:hover {
+    background-color: white;
+    border-color: #137FC3;
+    color: #137FC3;
+}
+
 .table-box {
-    max-height: 400px;
-    overflow: auto;
-    padding: 10px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 12px;
+    border-radius: 20px;
+}
+
+.table-box::-webkit-scrollbar {
+    width: 8px;
+}
+.table-box::-webkit-scrollbar-thumb {
+    background-color: #a6cdfb;
+    border-radius: 20px;
+}
+
+/* Responsive Improvements */
+@media (max-width: 700px) {
+    .name-nd-btns {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .allpresent, .allabsent {
+        flex: none;
+        width: 100%;
+    }
+    .edit-box {
+        width: 95%;
+        padding: 30px 20px;
+    }
+    .save-btn .all-btns {
+        width: 100%;
+    }
 }
