@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/bulk_edit.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bulk_edit.css' %}?v={{now|date:'U'}}">
 {% endblock %}
 
 {% block content %}
