@@ -1,9 +1,16 @@
+/* Wrapper to prevent footer issues */
+.bulk-edit-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #F7FAFC;
+}
+
 .bulk_edit {
+    flex: 1;
     color: #1C1C1C; 
     font-family: 'Inter', sans-serif;
-    background-color: #F7FAFC;
-    min-height: 100vh;
-    padding-bottom: 40px;
+    padding-bottom: 60px; /* Extra space to prevent footer overlap */
 }
 
 .edit-att-header {
@@ -32,7 +39,7 @@
     font-weight: 600;
     border: 2px solid transparent;
     box-shadow: 0 2px 6px rgba(30, 144, 255, 0.4);
-    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    transition: all 0.25s ease;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -44,13 +51,14 @@
     color: #137FC3;
     border-color: #137FC3;
     box-shadow: none;
+    text-decoration: none;
 }
 
 .edit-box {
     background-color: white;
-    max-width: 900px;
+    max-width: 1200px;
     width: 90%;
-    margin: 30px auto 0;
+    margin: 30px auto;
     text-align: center;
     box-sizing: border-box;
     padding: 40px 50px;
@@ -81,8 +89,8 @@
     font-weight: 700;
     font-size: 15px;
     cursor: pointer;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-    box-shadow: 0 4px 12px rgb(19 127 195 / 0.35);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(19, 127, 195, 0.35);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -98,13 +106,35 @@
     background-color: white;
     border-color: #137FC3;
     color: #137FC3;
+    transform: translateY(-2px);
 }
 
 .edit-details {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
     margin-top: 20px;
+}
+
+.table-box {
+    width: 100%;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 12px;
+    border-radius: 20px;
+    margin-bottom: 30px;
+}
+
+.table-box::-webkit-scrollbar {
+    width: 8px;
+}
+.table-box::-webkit-scrollbar-thumb {
+    background-color: #a6cdfb;
+    border-radius: 20px;
+}
+.table-box::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+    border-radius: 20px;
 }
 
 .edit-attend-tbl {
@@ -115,24 +145,30 @@
     color: #333333;
 }
 
-.edit-attend-tbl th, .edit-attend-tbl td {
-    padding: 14px 20px;
-    text-align: left;
-    vertical-align: middle;
-}
-
-.edit-attend-tbl thead th {
+.edit-attend-tbl th {
+    padding: 16px 20px;
     background-color: #E3F2FD;
     font-weight: 700;
-    border-radius: 12px;
     letter-spacing: 0.04em;
     color: #137FC3;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.edit-attend-tbl th:first-child {
+    border-radius: 12px 0 0 12px;
+}
+
+.edit-attend-tbl th:last-child {
+    border-radius: 0 12px 12px 0;
 }
 
 .edit-attend-tbl tbody tr {
     background-color: #F9FAFB;
     border-radius: 16px;
-    box-shadow: 0 2px 8px rgb(0 0 0 / 0.07);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
     transition: background-color 0.3s ease;
 }
 
@@ -141,75 +177,190 @@
 }
 
 .edit-attend-tbl td {
+    padding: 16px 20px;
     border: none;
-}
-
-.edit-attend-tbl input[type="radio"] {
-    margin-right: 8px;
-    cursor: pointer;
-    transform: scale(1.05);
     vertical-align: middle;
 }
 
-.edit-attend-tbl label {
+.member-name {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.member-section {
+    color: #7f8c8d;
+}
+
+.member-status {
+    text-align: center;
+}
+
+/* FIXED: Improved radio button styling */
+.radio-group {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
     user-select: none;
-    margin-right: 20px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.radio-option:hover {
+    background-color: rgba(19, 127, 195, 0.1);
+}
+
+.radio-option input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #137FC3;
+    flex-shrink: 0;
+}
+
+.radio-option label {
+    cursor: pointer;
     color: #137FC3;
     font-weight: 600;
+    font-size: 14px;
+    margin: 0;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* Ensure all radio options have consistent sizing */
+.radio-option input[type="radio"]:focus {
+    outline: 2px solid #137FC3;
+    outline-offset: 2px;
+}
+
+/* Status-specific styling */
+.radio-option:has(input[value="present"]) label {
+    color: #28a745;
+}
+
+.radio-option:has(input[value="late"]) label {
+    color: #ffc107;
+}
+
+.radio-option:has(input[value="absent"]) label {
+    color: #dc3545;
+}
+
+.radio-option:has(input[value="present"]:checked) {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.radio-option:has(input[value="late"]:checked) {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.radio-option:has(input[value="absent"]:checked) {
+    background-color: rgba(220, 53, 69, 0.1);
 }
 
 .save-btn {
-    padding: 14px 0;
-    margin-top: 40px;
+    padding: 20px 0;
+    margin-top: 20px;
+    width: 100%;
+    text-align: center;
 }
 
 .save-btn .all-btns {
-    width: 260px;
-    background-color: #137FC3;
+    width: 300px;
+    background-color: #28a745;
     border-radius: 14px;
     font-size: 17px;
     font-weight: 700;
-    box-shadow: 0 6px 20px rgb(19 127 195 / 0.4);
-    transition: background-color 0.3s ease;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    transition: all 0.3s ease;
 }
 
 .save-btn .all-btns:hover {
     background-color: white;
-    border-color: #137FC3;
-    color: #137FC3;
+    border-color: #28a745;
+    color: #28a745;
+    transform: translateY(-3px);
 }
 
-.table-box {
-    max-height: 420px;
-    overflow-y: auto;
-    padding: 12px;
-    border-radius: 20px;
-}
-
-.table-box::-webkit-scrollbar {
-    width: 8px;
-}
-.table-box::-webkit-scrollbar-thumb {
-    background-color: #a6cdfb;
-    border-radius: 20px;
+.text-center {
+    text-align: center;
 }
 
 /* Responsive Improvements */
-@media (max-width: 700px) {
+@media (max-width: 900px) {
+    .edit-box {
+        width: 95%;
+        padding: 30px 20px;
+        max-width: none;
+    }
+    
     .name-nd-btns {
         flex-direction: column;
         gap: 15px;
     }
+    
     .allpresent, .allabsent {
         flex: none;
         width: 100%;
     }
-    .edit-box {
-        width: 95%;
-        padding: 30px 20px;
-    }
+    
     .save-btn .all-btns {
         width: 100%;
+        max-width: 300px;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .edit-attend-tbl {
+        font-size: 14px;
+    }
+    
+    .edit-attend-tbl th, 
+    .edit-attend-tbl td {
+        padding: 12px 16px;
+    }
+    
+    .table-box {
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 600px) {
+    .edit-att-header {
+        padding: 30px 20px;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .edit-att-back {
+        position: static;
+        transform: none;
+    }
+    
+    .radio-group {
+        gap: 8px;
+    }
+    
+    .radio-option {
+        padding: 4px 8px;
+    }
+    
+    .radio-option label {
+        font-size: 13px;
     }
 }

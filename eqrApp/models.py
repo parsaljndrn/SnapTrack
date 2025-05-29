@@ -196,7 +196,8 @@ class Attendance(models.Model):
 
     def save(self, *args, **kwargs):
         # Only auto-set status if it's not being manually set
-        if not self.status or self.status == 'absent':
+        # FIXED: Only auto-calculate for truly empty status, not manually set 'absent'
+        if not self.status:  # Only when status is None/empty, not when it's explicitly 'absent'
             if self.event.start_time:
                 from django.utils.timezone import make_aware
                 from datetime import datetime, time

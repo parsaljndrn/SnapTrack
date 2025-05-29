@@ -130,30 +130,64 @@ def attendee_dashboard(request):
     selected_event = None
     selected_event_qr = None
     event_id = request.GET.get('event_id')
+    
     if event_id:
         try:
             selected_event = Event.objects.get(id=event_id)
             try:
+                # First try to get existing QR code
                 selected_event_qr = QRCode.objects.get(member=member, event=selected_event)
             except QRCode.DoesNotExist:
-                # Generate QR code on demand if it doesn't exist
-                qr_data = {
-                    'member_id': member.member_id,
-                    'event_id': selected_event.id,
-                    'event_name': selected_event.name,
-                    'event_date': selected_event.date.strftime('%Y-%m-%d'),
-                    'event_start_time': selected_event.start_time.strftime('%H:%M') if selected_event.start_time else None,
-                    'event_end_time': selected_event.end_time.strftime('%H:%M') if selected_event.end_time else None,
-                    'timestamp': timezone.now().isoformat(),
-                }
-                
-                encrypted_data = encrypt_qr_data(qr_data)
-                if encrypted_data:
+                # Generate QR code on-the-fly if it doesn't exist
+                try:
+                    import json
+                    import qrcode
+                    import os
+                    from django.conf import settings
+                    
+                    # Create QR data
+                    qr_data = {
+                        'member_id': member.member_id,
+                        'event_id': selected_event.id,
+                        'event_name': selected_event.name,
+                        'event_date': selected_event.date.strftime('%Y-%m-%d'),
+                        'event_start_time': selected_event.start_time.strftime('%H:%M') if selected_event.start_time else None,
+                        'event_end_time': selected_event.end_time.strftime('%H:%M') if selected_event.end_time else None,
+                    }
+
+                    # Generate QR code
+                    qr = qrcode.QRCode(
+                        version=1,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=10,
+                        border=4,
+                    )
+                    qr.add_data(json.dumps(qr_data))
+                    qr.make(fit=True)
+                    
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    
+                    # Create directory if it doesn't exist
+                    qr_dir = os.path.join(settings.MEDIA_ROOT, 'qr_codes', str(selected_event.id))
+                    os.makedirs(qr_dir, exist_ok=True)
+                    
+                    # Save to file
+                    filename = f"{member.member_id}.png"
+                    filepath = os.path.join(qr_dir, filename)
+                    img.save(filepath)
+                    
+                    # Store the path in the QRCode model
+                    relative_path = f'qr_codes/{selected_event.id}/{filename}'
                     selected_event_qr = QRCode.objects.create(
                         member=member,
                         event=selected_event,
-                        encrypted_data=encrypted_data
+                        image=relative_path
                     )
+                    
+                except Exception as e:
+                    print(f"Error generating QR code: {str(e)}")
+                    selected_event_qr = None
+                    
         except Event.DoesNotExist:
             pass
     
@@ -168,10 +202,11 @@ def attendee_dashboard(request):
         attendance__member=member,
         attendance__status__in=['present', 'late']
     ).order_by('date', 'start_time')
-    
+
+    # Get recent attendance history (last 10 records)
     attendance_history = Attendance.objects.filter(
         member=member
-    ).select_related('event').order_by('-event__date')
+    ).select_related('event').order_by('-event__date')[:10]
     
     context = {
         'member': member,
@@ -524,15 +559,14 @@ def bulk_edit_attendance(request, event_id):
     # Get all members and their attendance status for this event
     members = Member.objects.all().order_by('last_name', 'first_name')
     
-    # Get existing attendance records for this event
-    attendances = {
-        attendance.member_id: attendance.status 
-        for attendance in Attendance.objects.filter(event=event)
-    }
+    # Get existing attendance records for this event - Fixed the key mapping
+    attendances = {}
+    for attendance in Attendance.objects.filter(event=event).select_related('member'):
+        attendances[attendance.member.member_id] = attendance.status
     
     # Add attendance status to each member
     for member in members:
-        member.attendance_status = attendances.get(member.id, 'absent')
+        member.attendance_status = attendances.get(member.member_id, 'absent')
     
     return render(request, 'bulk_edit_attendance.html', {
         'event': event,
@@ -546,21 +580,74 @@ def save_bulk_attendance(request, event_id):
     event = get_object_or_404(Event, pk=event_id)
     members = Member.objects.all()
     count_updated = 0
+    errors = []
     
-    for member in members:
-        status_key = f'status_{member.member_id}'
-        if status_key in request.POST:
-            status = request.POST.get(status_key)
-
-            if status in ['present', 'absent', 'late']:
-                attendance, created = Attendance.objects.update_or_create(
-                    event=event,
-                    member=member,
-                    defaults={'status': status}
-                )
-                count_updated += 1
+    try:
+        with transaction.atomic():
+            # Debug: Print all POST data
+            print("=== BULK ATTENDANCE DEBUG ===")
+            print(f"POST data keys: {list(request.POST.keys())}")
+            
+            for member in members:
+                status_key = f'status_{member.member_id}'
+                print(f"Looking for key: {status_key}")
+                
+                if status_key in request.POST:
+                    status = request.POST.get(status_key)
+                    print(f"Found status for {member.get_full_name()}: {status}")
+                    
+                    # Validate status
+                    if status in ['present', 'absent', 'late']:
+                        # Update or create attendance record
+                        attendance, created = Attendance.objects.update_or_create(
+                            event=event,
+                            member=member,
+                            defaults={
+                                'status': status,
+                                'timestamp': timezone.now()
+                            }
+                        )
+                        count_updated += 1
+                        
+                        # Debug logging
+                        action = "Created" if created else "Updated"
+                        print(f"{action} attendance for {member.get_full_name()}: {status}")
+                        
+                        # Double-check the status was saved correctly
+                        attendance.refresh_from_db()
+                        print(f"Verified status in DB: {attendance.status}")
+                        
+                    else:
+                        error_msg = f"Invalid status '{status}' for member {member.member_id}"
+                        print(error_msg)
+                        errors.append(error_msg)
+                else:
+                    # If no radio button is selected, default to absent
+                    print(f"No status found for {member.get_full_name()}, defaulting to absent")
+                    attendance, created = Attendance.objects.update_or_create(
+                        event=event,
+                        member=member,
+                        defaults={
+                            'status': 'absent',
+                            'timestamp': timezone.now()
+                        }
+                    )
+                    count_updated += 1
+            
+            print(f"=== BULK ATTENDANCE COMPLETE: Updated {count_updated} records ===")
+        
+        if errors:
+            messages.warning(request, f'Updated {count_updated} members with some errors: {"; ".join(errors)}')
+        else:
+            messages.success(request, f'Successfully updated attendance for {count_updated} members!')
+        
+    except Exception as e:
+        error_msg = f'Error updating attendance: {str(e)}'
+        messages.error(request, error_msg)
+        print(f"BULK ATTENDANCE ERROR: {error_msg}")
+        import traceback
+        traceback.print_exc()
     
-    messages.success(request, f'Successfully updated attendance for {count_updated} members!')
     return redirect('eqrApp:event_detail', pk=event_id)
 
 @login_required
