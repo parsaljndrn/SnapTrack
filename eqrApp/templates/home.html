@@ -132,10 +132,13 @@ document.addEventListener('DOMContentLoaded', function() {
             updateAttendanceStats(this.value);
         });
 
-        // Optional: update stats when clicking recent activity links
+        // FIXED: Allow normal navigation for recent activity links
+        // Remove the problematic event listener that was preventing navigation
+        // The links will now work normally and redirect to event detail pages
+        
+        // Optional: Update dropdown when hovering over recent activity links (non-intrusive)
         document.querySelectorAll('.event-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
+            link.addEventListener('mouseenter', function() {
                 const eventId = this.dataset.eventId;
                 const option = document.querySelector(`#event-select option[value="${eventId}"]`);
                 if (option) {

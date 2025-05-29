@@ -135,78 +135,62 @@ def attendee_dashboard(request):
         try:
             selected_event = Event.objects.get(id=event_id)
             try:
-                # First try to get existing QR code
                 selected_event_qr = QRCode.objects.get(member=member, event=selected_event)
             except QRCode.DoesNotExist:
-                # Generate QR code on-the-fly if it doesn't exist
-                try:
-                    import json
-                    import qrcode
-                    import os
-                    from django.conf import settings
-                    
-                    # Create QR data
-                    qr_data = {
-                        'member_id': member.member_id,
-                        'event_id': selected_event.id,
-                        'event_name': selected_event.name,
-                        'event_date': selected_event.date.strftime('%Y-%m-%d'),
-                        'event_start_time': selected_event.start_time.strftime('%H:%M') if selected_event.start_time else None,
-                        'event_end_time': selected_event.end_time.strftime('%H:%M') if selected_event.end_time else None,
-                    }
-
-                    # Generate QR code
-                    qr = qrcode.QRCode(
-                        version=1,
-                        error_correction=qrcode.constants.ERROR_CORRECT_L,
-                        box_size=10,
-                        border=4,
-                    )
-                    qr.add_data(json.dumps(qr_data))
-                    qr.make(fit=True)
-                    
-                    img = qr.make_image(fill_color="black", back_color="white")
-                    
-                    # Create directory if it doesn't exist
-                    qr_dir = os.path.join(settings.MEDIA_ROOT, 'qr_codes', str(selected_event.id))
-                    os.makedirs(qr_dir, exist_ok=True)
-                    
-                    # Save to file
-                    filename = f"{member.member_id}.png"
-                    filepath = os.path.join(qr_dir, filename)
-                    img.save(filepath)
-                    
-                    # Store the path in the QRCode model
-                    relative_path = f'qr_codes/{selected_event.id}/{filename}'
-                    selected_event_qr = QRCode.objects.create(
-                        member=member,
-                        event=selected_event,
-                        image=relative_path
-                    )
-                    
-                except Exception as e:
-                    print(f"Error generating QR code: {str(e)}")
-                    selected_event_qr = None
-                    
+                selected_event_qr = None
         except Event.DoesNotExist:
             pass
     
+    # Use timezone-aware date
     today = timezone.now().date()
-    seven_days_later = today + timedelta(days=7)
     
-    # Get all events in the next 7 days that the member hasn't attended yet
-    upcoming_events = Event.objects.filter(
-        date__gte=today,
-        date__lte=seven_days_later
-    ).exclude(
-        attendance__member=member,
-        attendance__status__in=['present', 'late']
-    ).order_by('date', 'start_time')
-
-    # Get recent attendance history (last 10 records)
+    print(f"\n=== ATTENDEE DASHBOARD DEBUG ===")
+    print(f"Member: {member.get_full_name()} ({member.member_id})")
+    print(f"Today: {today}")
+    
+    # Step 1: Get ALL future events (no date limit initially)
+    all_future_events = Event.objects.filter(date__gte=today).order_by('date', 'start_time')
+    print(f"All future events: {all_future_events.count()}")
+    
+    for event in all_future_events:
+        print(f"  - Event: {event.name} | Date: {event.date} | ID: {event.id}")
+    
+    # Step 2: Check what attendance records exist for this member
+    member_attendance = Attendance.objects.filter(
+        member=member,
+        event__date__gte=today
+    ).select_related('event')
+    
+    print(f"\nMember's attendance records for future events:")
+    attendance_lookup = {}
+    for att in member_attendance:
+        print(f"  - Event: {att.event.name} | Status: {att.status} | Date: {att.event.date}")
+        attendance_lookup[att.event.id] = att.status
+    
+    # Step 3: Filter events based on attendance
+    upcoming_events = []
+    for event in all_future_events:
+        status = attendance_lookup.get(event.id)
+        if status in ['present', 'late']:
+            print(f"  EXCLUDED: {event.name} (already attended: {status})")
+        else:
+            print(f"  INCLUDED: {event.name} (status: {status or 'no record'})")
+            upcoming_events.append(event)
+    
+    # Limit to reasonable number for UI
+    upcoming_events = upcoming_events[:10]
+    
+    print(f"\nFinal upcoming events count: {len(upcoming_events)}")
+    for event in upcoming_events:
+        print(f"  - {event.name} on {event.date}")
+    
+    # Get recent attendance history
     attendance_history = Attendance.objects.filter(
         member=member
-    ).select_related('event').order_by('-event__date')[:10]
+    ).select_related('event').order_by('-event__date', '-timestamp')[:10]
+    
+    print(f"\nAttendance history count: {attendance_history.count()}")
+    print("=== END DEBUG ===\n")
     
     context = {
         'member': member,
