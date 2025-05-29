@@ -4,7 +4,7 @@
 {% block title %}{{ action }} Member{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/manage_member-design.css' %}">
+<link rel="stylesheet" href="{% static 'css/manage_member-design.css' %}?v={{now|date:'U'}}">
 {% endblock %}
 
 {% block content %}
@@ -27,7 +27,7 @@
         {% endif %}
 
         {% if password %}
-        <div class="form-errors" style="background: #d4edda; color: #155724;">
+        <div class="form-success">
             <strong>Member Created Successfully!</strong><br>
             Username: {{ form.instance.member_id }}<br>
             Password: <code>{{ password }}</code><br>

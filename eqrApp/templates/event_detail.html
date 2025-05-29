@@ -2,47 +2,51 @@
 {% load static %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}">
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v={{now|date:'U'}}">
 {% endblock %}
 
 {% block content %}
-<div class="event-details-box">
-    <div class="event-details-header">
+<div class="event-details-body">
+    <header class="event-details-header">
         <div class="event-details-back">
             <a href="{% url 'eqrApp:event_list' %}" class="event-details-backbtn">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
         </div>
         <h2 class="event-details-event-name-date">
-            <i class="fas fa-calendar-day me-2"></i>
-            {{ event.name }} - {{ event.date }}
+            <i class="fas fa-calendar-day me-2"></i> {{ event.name }} - {{ event.date }}
         </h2>
         <div class="event-details-qr">
             <button id="generateQRCodes" class="qr-generationbtn">
                 <i class="fas fa-qrcode me-1"></i> Generate QR Codes
             </button>
         </div>
-    </div>
-    <div class="event-detail-card">
-        <div class="event-detail-scanner"> <!-- flip-box -->
+    </header>
+
+    <section class="event-detail-card">
+        <article class="event-detail-scanner">
             <div class="flip-box-inner">
                 <div class="flip-box-front">
                     <div class="event-detail-qrscanner">
                         <h4><i class="fas fa-camera me-2"></i> QR Scanner</h4>
-                        <center><h1 class="qreventname">{{ event.name }}</h1>
-                        <h2>{{ event.date }}</h2>
-                        <h2>
-                            {% if event.start_time and event.end_time %}
-                                {{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}
-                            {% else %}
-                                Not specified
-                            {% endif %}
-                        </h2></center>
+                        <center>
+                            <h1 class="qreventname">{{ event.name }}</h1>
+                            <h2>{{ event.date }}</h2>
+                            <h2>
+                                {% if event.start_time and event.end_time %}
+                                    {{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}
+                                {% else %}
+                                    Not specified
+                                {% endif %}
+                            </h2>
+                        </center>
                     </div>
                     <div class="event-detail-btnscanner">
-                        <center><button class="custom-btn-scanner" onclick="flipBox(this)">
-                            <i class="fa-solid fa-qrcode"></i> Start Scanner
-                        </button></center>
+                        <center>
+                            <button class="custom-btn-scanner" onclick="flipBox(this)">
+                                <i class="fa-solid fa-qrcode"></i> Start Scanner
+                            </button>
+                        </center>
                     </div>
                 </div>
                 <div class="flip-box-back">
@@ -53,60 +57,51 @@
                         </button>
                     </div>
                     <div class="event-detail-btncamera">
-                        <div id="scanner-container" class="" style="display:none;">
+                        <div id="scanner-container" style="display:none;">
                             <video id="scanner" width="100%" class="rounded border"></video>
                         </div>
-                        <center><p class="text-muted small">Point the camera at a member's QR code to register attendance</p></center>
+                        <center>
+                            <p class="text-muted small">Point the camera at a member's QR code to register attendance</p>
+                        </center>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="event-detail-attendees">
+        </article>
+
+        <article class="event-detail-attendees">
             <div class="event-detail-tbl">
-                <center><table class="table-event-details">
-                    <thead>
-                    <tr>
-                        <td class="attendee-data-names">
-                            <table class="attendee-data-names-table">
+                <center>
+                    <table class="table-event-details">
+                        <thead>
+                            <tr>
+                                <th class="attendee-name">Name</th>
+                                <th class="attendee-time">Time</th>
+                                <th class="attendee-status">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attendance in attendances %}
                                 <tr>
-                                    <th class="attendee-name"> Name</th>
-                                    <th class="attendee-time">Time</th>
-                                    <th class="attendee-status">Status</th>
+                                    <td>{{ attendance.member.get_full_name }}</td>
+                                    <td>{{ attendance.timestamp|date:"g:i A" }}</td>
+                                    <td>
+                                        <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ attendance.status|title }}
+                                        </span>
+                                    </td>
                                 </tr>
-                            </table>
-                        </td>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for attendance in attendances %}
-                    <tr>
-                        <td class="attendee-data">
-                            <div class="attendee-namedata">
-                                {{ attendance.member.get_full_name }}
-                            </div>
-                            <div class="attendee-timedata">
-                                {{ attendance.timestamp|date:"g:i A" }}
-                            </div>
-                            <div class="attendee-statusdata">
-                                <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}bg-danger{% endif %}">
-                                    {{ attendance.status|title }}
-                                </span>
-                            </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td class="text-center py-3 text-muted">
-                            No attendance recorded yet
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table></center>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3">No attendance recorded yet</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </center>
             </div>
             <div class="event-details-edit">
                 <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="event-details-editbtn">
-                    <i class="fa-solid fa-file-pen"></i>  Edit Manually
+                    <i class="fa-solid fa-file-pen"></i> Edit Manually
                 </a>
             </div>
             <div class="exportbtn">
@@ -114,14 +109,16 @@
                     <i class="fa-solid fa-file-export"></i> Export CSV
                 </a>
             </div>
-        </div>
-    </div>
-    <div class="event-detail-statsbg"><div class="add">
-        <div class="event-detail-stats">
-            <div class="event-detail-stats-header">
-                <i class="fas fa-chart-pie"></i> Attendance Summary
-            </div>
-            <div class="event-detail-stats-body">
+        </article>
+    </section>
+
+    <section class="event-detail-statsbg">
+        <div class="add">
+            <div class="event-detail-stats">
+                <div class="event-detail-stats-header">
+                    <i class="fas fa-chart-pie"></i> Attendance Summary
+                </div>
+                <div class="event-detail-stats-body">
                     <div class="attendee-piechart">
                         <canvas id="attendanceChart" height="250"></canvas>
                     </div>
@@ -130,53 +127,39 @@
                             <table class="piechart-data-table">
                                 <thead>
                                     <tr>
-                                        <td class="piechart-data-names">
-                                            <table class="piechart-data-names-table">
-                                                <tr>
-                                                    <th class="piechart-name">Status</th>
-                                                    <th class="piechart-time">Count</th>
-                                                    <th class="piechart-status">Percentage</th>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
+                                        <th class="piechart-name">Status</th>
+                                        <th class="piechart-time">Count</th>
+                                        <th class="piechart-status">Percentage</th>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td class="piechart-data">
-                                            <div class="piechart-namedata">PRESENT</div>
-                                            <div class="piechart-timedata">{{ present_count }}</div>
-                                            <div class="piechart-statusdata">{{ present_percentage }}%</div>
-                                        </td>
+                                        <td>PRESENT</td>
+                                        <td>{{ present_count }}</td>
+                                        <td>{{ present_percentage }}%</td>
                                     </tr>
                                     <tr>
-                                        <td class="piechart-data">
-                                            <div class="piechart-namedata">LATE</div>
-                                            <div class="piechart-timedata">{{ late_count }}</div>
-                                            <div class="piechart-statusdata">{{ late_percentage }}%</div>
-                                        </td>
+                                        <td>LATE</td>
+                                        <td>{{ late_count }}</td>
+                                        <td>{{ late_percentage }}%</td>
                                     </tr>
                                     <tr>
-                                        <td class="piechart-data">
-                                            <div class="piechart-namedata">ABSENT</div>
-                                            <div class="piechart-timedata">{{ absent_count }}</div>
-                                            <div class="piechart-statusdata">{{ absent_percentage }}%</div>
-                                        </td>
+                                        <td>ABSENT</td>
+                                        <td>{{ absent_count }}</td>
+                                        <td>{{ absent_percentage }}%</td>
                                     </tr>
                                     <tr>
-                                        <td class="piechart-data">
-                                            <div class="piechart-namedata"><strong>TOTAL</strong></div>
-                                            <div class="piechart-timedata"><strong>{{ total_members }}</strong></div>
-                                            <div class="piechart-statusdata">100%</div>
-                                        </td>
+                                        <td>TOTAL</td>
+                                        <td>{{ total_members }}</td>
+                                        <td>100%</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                </div>
             </div>
         </div>
-    </div></div>
+    </section>
 </div>
 {% endblock %}
 

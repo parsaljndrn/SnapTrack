@@ -2,78 +2,77 @@
 {% load static %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/member_list-design.css' %}">
+<link rel="stylesheet" href="{% static 'css/member_list-design.css' %}?v={{now|date:'U'}}">
 {% endblock %}
 
 {% block content %}
 <div class="member-list-page">
-  <header class="ml-header">
-    <h1 class="ml-title"> Member Directory
-    </h1>
-    <div class="ml-buttons">
-      <a href="{% url 'eqrApp:add_member' %}" class="btn add-btn">
-        <span class="btn-icon"><i class="fa-solid fa-user-plus"></i></span> Add Member
-      </a>
-      <button id="massDeleteBtn" class="btn remove-btn" disabled>
-        <span class="btn-icon"><i class="fa-solid fa-trash"></i></span> Delete Selected
-      </button>
+    <header class="ml-header">
+        <h1 class="ml-title">Member Directory</h1>
+        <div class="ml-buttons">
+            <a href="{% url 'eqrApp:add_member' %}" class="btn add-btn">
+                <span class="btn-icon"><i class="fa-solid fa-user-plus"></i></span> Add Member
+            </a>
+            <button id="massDeleteBtn" class="btn remove-btn" disabled>
+                <span class="btn-icon"><i class="fa-solid fa-trash"></i></span> Delete Selected
+            </button>
+        </div>
+    </header>
+
+    <div class="ml-sort" style="margin-top: 1rem;margin-bottom: 1rem;">
+        <form method="get" id="sortForm" class="d-inline">
+            <label for="sortSelect" class="form-label me-2">Sort by:</label>
+            <select name="sort" id="sortSelect" class="form-select d-inline w-auto" onchange="document.getElementById('sortForm').submit()">
+                <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
+                <option value="id" {% if current_sort == 'id' %}selected{% endif %}>ID</option>
+                <option value="section" {% if current_sort == 'section' %}selected{% endif %}>Section</option>
+            </select>
+        </form>
     </div>
-  </header>
 
-  <div class="ml-sort mb-3" style="margin-top: 1rem;">
-    <form method="get" id="sortForm" class="d-inline">
-      <label for="sortSelect" class="form-label me-2">Sort by:</label>
-      <select name="sort" id="sortSelect" class="form-select d-inline w-auto" onchange="document.getElementById('sortForm').submit()">
-        <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
-        <option value="id" {% if current_sort == 'id' %}selected{% endif %}>ID</option>
-        <option value="section" {% if current_sort == 'section' %}selected{% endif %}>Section</option>
-      </select>
-    </form>
-  </div>
+    <div id="messageContainer"></div>
 
-  <div id="messageContainer"></div>
-
-  <div class="ml-card">
-    <form id="massDeleteForm">
-      {% csrf_token %}
-      <table class="ml-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="selectAll" /></th>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Section</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for member in members %}
-          <tr data-member-id="{{ member.member_id }}">
-            <td><input type="checkbox" name="member_ids" value="{{ member.member_id }}" class="member-checkbox" /></td>
-            <td>{{ member.member_id }}</td>
-            <td>{{ member.get_full_name }}</td>
-            <td>{{ member.email|default:"—" }}</td>
-            <td>{{ member.section|default:"—" }}</td>
-            <td>
-              <div class="btn-group btn-group-sm">
-                <a href="{% url 'eqrApp:manage_member' member.member_id %}" class="btn btn-outline-primary" title="Edit">
-                  <i class="fas fa-edit" style ="color: #137FC3;"></i>
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="empty-row">
-              No members found. <a href="{% url 'eqrApp:add_member' %}">Add your first member</a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </form>
-  </div>
+    <div class="ml-card">
+        <form id="massDeleteForm">
+            {% csrf_token %}
+            <table class="ml-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" /></th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Section</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr data-member-id="{{ member.member_id }}">
+                        <td><input type="checkbox" name="member_ids" value="{{ member.member_id }}" class="member-checkbox" /></td>
+                        <td>{{ member.member_id }}</td>
+                        <td>{{ member.get_full_name }}</td>
+                        <td>{{ member.email|default:"—" }}</td>
+                        <td>{{ member.section|default:"—" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'eqrApp:manage_member' member.member_id %}" class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit" style="color: #137FC3;"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-row">
+                            No members found. <a href="{% url 'eqrApp:add_member' %}">Add your first member</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
 </div>
 {% endblock %}
 

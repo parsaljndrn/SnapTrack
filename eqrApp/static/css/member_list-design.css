@@ -50,180 +50,163 @@ html, body{
 .eventieimg{margin-right: 10px; vertical-align: middle; margin-bottom: 10px; margin-right: 0;}
 
 
-/* manage_member.html */
+/* member_LIST.html */
 .member-list-page {
-  max-width: 100%;
-  margin: 40px auto;
-  padding: 0 20px;
-  font-family: 'Segoe UI', sans-serif;
-  color: #333;
-  background: #f9fbfd;
+    max-width: 100%;
+    margin: 40px auto;
+    padding: 0 20px;
+    font-family: 'Segoe UI', sans-serif;
+    color: #333;
+    background: #f9fbfd;
 }
 
 .ml-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
 }
 
 .ml-title {
-  display: flex;
-  align-items: center;
-  font-size: 2rem;
-  color: #137FC3;
-  margin: 0;
-  font-size: 42px;
-  font-weight: 700;
-  padding-left: 5px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
-}
-
-.ml-icon {
-  width: 32px;
-  height: 32px;
-  margin-right: 20px;
-  opacity: 0.6;
+    font-size: 42px;
+    font-weight: 700;
+    color: #137FC3;
+    margin: 0;
+    padding-left: 5px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 .ml-buttons .btn {
-  margin-left: 10px;
+    margin-left: 10px;
 }
 
 .btn {
-  appearance: none;
-  -webkit-appearance: none;
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 1.1rem;
-  line-height: 1;
-  box-sizing: border-box;       
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  color: white;
-  transition: background 0.2s;
+    appearance: none;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+    transition: background 0.2s;
 }
 
 .add-btn {
-  background: #137FC3;
+    background: #137FC3;
 }
 .add-btn:hover {
-  background: #004a80;
+    background: #004a80;
 }
 
 .remove-btn {
-  background: #e2574c;
+    background: #e2574c;
 }
 .remove-btn:disabled {
-  background: #c1c1c1;
-  cursor: not-allowed;
+    background: #c1c1c1;
+    cursor: not-allowed;
 }
 
 .btn-icon {
-  font-size: 0.8em;   
-  margin-right: 0.5em; 
+    font-size: 0.8em;
+    margin-right: 0.5em;
 }
 
 .ml-card {
-  background: #CDE1EF;
-  border-radius: 30px;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    background: #CDE1EF;
+    border-radius: 30px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .ml-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: transparent;
-  position: relative;
-  z-index: 2;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 14px;
+    background: transparent;
 }
 
 .ml-table thead {
-  background: white;
-}
-
-.ml-table thead tr {
-  border-radius: 50px;
-  overflow: hidden;
+    background: white;
 }
 
 .ml-table thead th {
-  padding: 12px 16px;
-  font-weight: 600;
-  font-size: 1rem;
-  border-bottom: none;
-  text-align: left;
-}
-
-.ml-table thead th:first-child {
-  width: 40px;
-  text-align: center;
-}
-
-.ml-table thead th:first-child {
-  border-top-left-radius: 50px;
-}
-.ml-table thead th:last-child {
-  border-top-right-radius: 50px;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 1rem;
+    border-bottom: none;
+    text-align: left;
 }
 
 .ml-table tbody tr {
-  background: transparent;
+    background: transparent;
 }
 
 .ml-table tbody td {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  background: transparent;
-  vertical-align: middle;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    vertical-align: middle;
 }
 
 .ml-table tbody tr:hover td {
-  background: rgba(255,255,255,0.3);
-}
-
-.ml-table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 20px;
-}
-.ml-table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 20px;
-  border-bottom: none;
-}
-
-.ml-table td:first-child,
-.ml-table th:first-child {
-  width: 40px;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .empty-row {
-  text-align: center;
-  color: #666;
-  padding: 30px 0;
+    text-align: center;
+    color: #666;
+    padding: 30px 0;
 }
 
 .empty-row a {
-  color: #2ea1f8;
-  text-decoration: none;
+    color: #2ea1f8;
+    text-decoration: none;
+}
+
+.ml-sort form {
+    display: flex;
+    align-items: center;
+}
+.ml-sort label {
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+#sortSelect {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: white url("data:image/svg+xml;charset=US-ASCII,%3csvg width='10' height='5' viewBox='0 0 10 5' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M0 0L5 5L10 0H0Z' fill='%23999'/%3e%3c/svg%3e") no-repeat right 12px center;
+    background-size: 10px 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 6px 36px 6px 12px;
+    font-size: 1rem;
+    color: #333;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: auto;
+}
+#sortSelect:hover {
+    border-color: #137FC3;
 }
 
 @media (max-width: 768px) {
-  .ml-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+    .ml-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 
-  .ml-buttons {
-    margin-top: 10px;
-  }
+    .ml-buttons {
+        margin-top: 10px;
+    }
 }
