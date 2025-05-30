@@ -1,6 +1,6 @@
 # production_settings.py
 import os
-from .django_employee_qr.settings import *
+from .settings import *
 
 # Security Settings
 DEBUG = False
