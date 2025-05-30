@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/bulk_edit.css' %}?v={{now|date:'U'}}">
+{% endblock %}
+
+{% block content %}
+<div class="bulk-edit-wrapper">
+    <div class="bulk_edit">
+        <div class="edit-att-header">
+            <div class="edit-att-back">
+                <a href="{% url 'eqrApp:event_detail' event.id %}" class="edit-att-backbtn">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+            <div>
+                <h2 style="color: black;">
+                    <i class="fas fa-users-gear me-2"></i> {{ event.name }}
+                </h2>
+            </div>
+        </div>
+
+        <div class="edit-box">
+            <div class="name-nd-btns">
+                <div class="allpresent">
+                    <button type="button" class="all-btns" id="setAllPresent">
+                        <i class="fas fa-check"></i> Mark All Present
+                    </button>
+                </div>
+                <div>
+                    <h3>
+                        <i class="fas fa-edit me-2"></i> Edit Attendance Status
+                    </h3>
+                </div>
+                <div class="allabsent">
+                    <button type="button" class="all-btns" id="setAllAbsent">
+                        <i class="fas fa-times"></i> Mark All Absent
+                    </button>
+                </div>
+            </div>
+            
+            <div class="edit-details">
+                <form id="bulkAttendanceForm" method="post" action="{% url 'eqrApp:save_bulk_attendance' event.id %}">
+                    {% csrf_token %}
+                    <div class="table-box">
+                        <table class="edit-attend-tbl">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Section</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in members %}
+                                <tr data-member-id="{{ member.member_id }}">
+                                    <td class="member-name">{{ member.get_full_name }}</td>
+                                    <td class="member-section">{{ member.section|default:"-" }}</td>
+                                    <td class="member-status">
+                                        <div class="radio-group">
+                                            <div class="radio-option">
+                                                <input type="radio" 
+                                                       name="status_{{ member.member_id }}" 
+                                                       id="present_{{ member.member_id }}" 
+                                                       value="present"
+                                                       {% if member.attendance_status == 'present' %}checked{% endif %}
+                                                       data-member-name="{{ member.get_full_name }}">
+                                                <label for="present_{{ member.member_id }}">Present</label>
+                                            </div>
+                                            
+                                            <div class="radio-option">
+                                                <input type="radio" 
+                                                       name="status_{{ member.member_id }}"
+                                                       id="late_{{ member.member_id }}" 
+                                                       value="late"
+                                                       {% if member.attendance_status == 'late' %}checked{% endif %}
+                                                       data-member-name="{{ member.get_full_name }}">
+                                                <label for="late_{{ member.member_id }}">Late</label>
+                                            </div>
+                                            
+                                            <div class="radio-option">
+                                                <input type="radio" 
+                                                       name="status_{{ member.member_id }}"
+                                                       id="absent_{{ member.member_id }}" 
+                                                       value="absent"
+                                                       {% if member.attendance_status == 'absent' %}checked{% endif %}
+                                                       data-member-name="{{ member.get_full_name }}">
+                                                <label for="absent_{{ member.member_id }}">Absent</label>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">
+                                        No members found. <a href="{% url 'eqrApp:add_member' %}">Add your first member</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="save-btn">
+                        <button type="submit" class="all-btns" id="saveChanges">
+                            <i class="fas fa-save me-2"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== BULK EDIT ATTENDANCE SCRIPT LOADED ===');
+    
+    // Count elements for debugging
+    const allRadios = document.querySelectorAll('input[type="radio"]');
+    const presentRadios = document.querySelectorAll('input[id^="present_"]');
+    const lateRadios = document.querySelectorAll('input[id^="late_"]');
+    const absentRadios = document.querySelectorAll('input[id^="absent_"]');
+    
+    console.log(`Total radios: ${allRadios.length}`);
+    console.log(`Present radios: ${presentRadios.length}`);
+    console.log(`Late radios: ${lateRadios.length}`);
+    console.log(`Absent radios: ${absentRadios.length}`);
+    
+    // Log initial state
+    console.log('=== INITIAL RADIO BUTTON STATE ===');
+    allRadios.forEach(radio => {
+        if (radio.checked) {
+            console.log(`Initially checked: ${radio.name} = ${radio.value} (${radio.dataset.memberName})`);
+        }
+    });
+    
+    // Set all present
+    document.getElementById('setAllPresent').addEventListener('click', function() {
+        console.log('=== SETTING ALL PRESENT ===');
+        presentRadios.forEach((radio, index) => {
+            radio.checked = true;
+            console.log(`Set present for: ${radio.dataset.memberName} (${radio.name})`);
+        });
+    });
+    
+    // Set all absent
+    document.getElementById('setAllAbsent').addEventListener('click', function() {
+        console.log('=== SETTING ALL ABSENT ===');
+        absentRadios.forEach((radio, index) => {
+            radio.checked = true;
+            console.log(`Set absent for: ${radio.dataset.memberName} (${radio.name})`);
+        });
+    });
+    
+    // Debug: Log radio button changes
+    allRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                console.log(`Radio changed: ${this.dataset.memberName} -> ${this.value}`);
+            }
+        });
+    });
+    
+    // Form validation and debugging before submit
+    document.getElementById('bulkAttendanceForm').addEventListener('submit', function(e) {
+        console.log('=== FORM SUBMISSION DEBUG ===');
+        
+        const formData = new FormData(this);
+        const checkedInputs = document.querySelectorAll('input[type="radio"]:checked');
+        
+        console.log(`Checked inputs: ${checkedInputs.length}`);
+        
+        // Log all form data
+        let statusCounts = { present: 0, late: 0, absent: 0 };
+        for (let [key, value] of formData.entries()) {
+            if (key.startsWith('status_')) {
+                console.log(`${key}: ${value}`);
+                statusCounts[value]++;
+            }
+        }
+        
+        console.log('Status distribution:', statusCounts);
+        
+        // Check for any unchecked members
+        const memberRows = document.querySelectorAll('tr[data-member-id]');
+        let unselectedCount = 0;
+        
+        memberRows.forEach(row => {
+            const memberId = row.getAttribute('data-member-id');
+            const checkedRadio = row.querySelector('input[type="radio"]:checked');
+            if (!checkedRadio) {
+                console.log(`No selection for member ID: ${memberId}`);
+                unselectedCount++;
+            }
+        });
+        
+        if (unselectedCount > 0) {
+            console.log(`${unselectedCount} members have no status selected`);
+        }
+        
+        console.log('Form submission proceeding...');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Member{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/manage_member-design.css' %}?v={{now|date:'U'}}">
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-icon-wrapper">
+            <img src="{% static 'images/Vector.png' %}" alt="" class="form-icon" />
+        </div>
+
+        <h2 class="form-title">
+            {% if action == 'Add' %}Add New{% else %}Edit{% endif %} Member
+        </h2>
+
+        {% if form.non_field_errors %}
+        <div class="form-errors">
+            {% for error in form.non_field_errors %}
+                {{ error }}<br>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if password %}
+        <div class="form-success">
+            <strong>Member Created Successfully!</strong><br>
+            Username: {{ form.instance.member_id }}<br>
+            Password: <code>{{ password }}</code><br>
+            <small>This password will not be shown again. Please provide it to the attendee.</small>
+        </div>
+        {% endif %}
+
+        <form method="post" class="member-form" novalidate>
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="id_member_id">Student Number</label>
+                {{ form.member_id }}
+                <div class="error-msg">{{ form.member_id.errors.0 }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_first_name">First Name</label>
+                {{ form.first_name }}
+                <div class="error-msg">{{ form.first_name.errors.0 }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_last_name">Last Name</label>
+                {{ form.last_name }}
+                <div class="error-msg">{{ form.last_name.errors.0 }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_email">Email</label>
+                {{ form.email }}
+                <div class="error-msg">{{ form.email.errors.0 }}</div>
+            </div>
+
+            <div class="form-group">
+                <label for="id_section">Section</label>
+                {{ form.section }}
+                <div class="error-msg">{{ form.section.errors.0 }}</div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'eqrApp:member_list' %}" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">
+                    {% if action == 'Add' %}Create Member{% else %}Save Changes{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

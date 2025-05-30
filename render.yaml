@@ -1,0 +1,17 @@
+# render.yaml - Render service configuration
+services:
+  - type: web
+    name: django-employee-qr
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn django_employee_qr.wsgi:application"
+    plan: free  # Use 'starter' for paid plan with more resources
+    environmentVariables:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: django_employee_qr.production_settings
+      - key: SECRET_KEY
+        generateValue: true  # Render will generate a secure key
+      - key: QR_ENCRYPTION_KEY
+        value: K8-7wJxlLRmn4lKm-yFX3_8tJhCQcvJgkY8wFqP7-A8=  # Change this in production

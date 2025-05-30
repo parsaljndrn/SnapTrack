@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/event_detail.css' %}?v={{now|date:'U'}}">
+{% endblock %}
+
+{% block content %}
+<div class="event-details-body">
+    <header class="event-details-header">
+        <div class="event-details-back">
+            <a href="{% url 'eqrApp:event_list' %}" class="event-details-backbtn">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+        <h2 class="event-details-event-name-date">
+            <i class="fas fa-calendar-day me-2"></i> {{ event.name }} - {{ event.date }}
+        </h2>
+        <div class="event-details-qr">
+            <button id="generateQRCodes" class="qr-generationbtn">
+                <i class="fas fa-qrcode me-1"></i> Generate QR Codes
+            </button>
+        </div>
+    </header>
+
+    <section class="event-detail-card">
+        <article class="event-detail-scanner">
+            <div class="flip-box-inner">
+                <div class="flip-box-front">
+                    <div class="event-detail-qrscanner">
+                        <h4><i class="fas fa-camera me-2"></i> QR Scanner</h4>
+                        <center>
+                            <h1 class="qreventname">{{ event.name }}</h1>
+                            <h2>{{ event.date }}</h2>
+                            <h2>
+                                {% if event.start_time and event.end_time %}
+                                    {{ event.start_time|time:"g:i A" }} - {{ event.end_time|time:"g:i A" }}
+                                {% else %}
+                                    Not specified
+                                {% endif %}
+                            </h2>
+                        </center>
+                    </div>
+                    <div class="event-detail-btnscanner">
+                        <center>
+                            <button class="custom-btn-scanner" onclick="flipBox(this)">
+                                <i class="fa-solid fa-qrcode"></i> Start Scanner
+                            </button>
+                        </center>
+                    </div>
+                </div>
+                <div class="flip-box-back">
+                    <div class="event-detail-qrscannert">
+                        <h4><i class="fas fa-camera me-2"></i> QR Scanner</h4>
+                        <button class="custom-btn-scannerbck" onclick="flipBox(this)">
+                            <i class="fas fa-rotate-left"></i> Back
+                        </button>
+                    </div>
+                    <div class="event-detail-btncamera">
+                        <div id="scanner-container" style="display:none;">
+                            <video id="scanner" width="100%" class="rounded border"></video>
+                        </div>
+                        <center>
+                            <p class="text-muted small">Point the camera at a member's QR code to register attendance</p>
+                        </center>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <article class="event-detail-attendees">
+            <div class="event-detail-tbl">
+                <center>
+                    <table class="table-event-details">
+                        <thead>
+                            <tr>
+                                <th class="attendee-name">Name</th>
+                                <th class="attendee-time">Time</th>
+                                <th class="attendee-status">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attendance in attendances %}
+                                <tr>
+                                    <td>{{ attendance.member.get_full_name }}</td>
+                                    <td>{{ attendance.timestamp|date:"g:i A" }}</td>
+                                    <td>
+                                        <span class="badge {% if attendance.status == 'present' %}bg-success{% elif attendance.status == 'late' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ attendance.status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No attendance recorded yet</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </center>
+            </div>
+            
+            <div class="attendees-actions">
+                <div class="event-details-edit">
+                    <a href="{% url 'eqrApp:bulk_edit_attendance' event.id %}" class="event-details-editbtn">
+                        <i class="fa-solid fa-file-pen"></i> Edit Manually
+                    </a>
+                </div>
+                <div class="exportbtn">
+                    <a href="{% url 'eqrApp:export_csv' event.id %}" class="event-details-editbtn">
+                        <i class="fa-solid fa-file-export"></i> Export CSV
+                    </a>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="event-detail-statsbg">
+        <div class="add">
+            <div class="event-detail-stats">
+                <div class="event-detail-stats-header">
+                    <i class="fas fa-chart-pie"></i> Attendance Summary
+                </div>
+                <div class="event-detail-stats-body">
+                    <div class="attendee-piechart">
+                        <canvas id="attendanceChart" height="250"></canvas>
+                    </div>
+                    <div class="attendee-piechart-data">
+                        <div class="attendee-piechart-datatbl">
+                            <table class="piechart-data-table">
+                                <thead>
+                                    <tr>
+                                        <th class="piechart-name">Status</th>
+                                        <th class="piechart-time">Count</th>
+                                        <th class="piechart-status">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>PRESENT</td>
+                                        <td>{{ present_count }}</td>
+                                        <td>{{ present_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>LATE</td>
+                                        <td>{{ late_count }}</td>
+                                        <td>{{ late_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>ABSENT</td>
+                                        <td>{{ absent_count }}</td>
+                                        <td>{{ absent_percentage }}%</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>TOTAL</strong></td>
+                                        <td><strong>{{ total_members }}</strong></td>
+                                        <td><strong>100%</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Hidden CSRF token for JavaScript -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+
+<script>
+let scanner = null;
+
+function flipBox(button) {
+    const box = button.closest('.event-detail-scanner');
+    const videoContainer = box.querySelector('#scanner-container');
+    const videoElement = box.querySelector('#scanner');
+    const eventDate = new Date('{{ event.date|date:"Y-m-d" }}');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (eventDate < today) {
+        alert("This event has passed. Scanning is no longer available.");
+        return;
+    }
+
+    box.classList.toggle('flipped');
+    const isFlipped = box.classList.contains('flipped');
+
+    if (isFlipped) {
+        // Show video container
+        videoContainer.style.display = 'block';
+
+        if (!scanner) {
+            scanner = new Instascan.Scanner({ video: videoElement });
+
+            scanner.addListener('scan', function (content) {
+                console.log('=== QR SCAN DEBUG ===');
+                console.log('Scanned content length:', content.length);
+                console.log('Scanned content preview:', content.substring(0, 100) + '...');
+                console.log('Is encrypted QR:', content.startsWith('EQR1:'));
+                
+                // Stop scanning immediately to prevent multiple scans
+                if (scanner) {
+                    scanner.stop();
+                }
+                
+                try {
+                    // Get CSRF token
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+                    console.log('Sending QR data to backend for processing...');
+                    
+                    // Show processing message
+                    const processingMsg = document.createElement('div');
+                    processingMsg.innerHTML = '<p style="color: white; text-align: center; margin: 10px;">Processing QR code...</p>';
+                    videoContainer.appendChild(processingMsg);
+                    
+                    fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: `scan_data=${encodeURIComponent(content)}`,
+                    })
+                    .then((response) => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error(`Server error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        console.log('Server response:', data);
+                        
+                        // Remove processing message
+                        if (processingMsg) {
+                            processingMsg.remove();
+                        }
+                        
+                        if (data.status === 'success') {
+                            // Show success message
+                            alert(`✅ Success: ${data.message}`);
+                            
+                            // Reload page to show updated attendance
+                            console.log('Reloading page to show updated attendance...');
+                            window.location.reload();
+                        } else {
+                            // Show error message
+                            alert(`❌ Error: ${data.message}`);
+                            
+                            // Restart scanner for retry
+                            setTimeout(() => {
+                                if (scanner) {
+                                    scanner.start(cameras[0]);
+                                }
+                            }, 2000);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Fetch error:', error);
+                        
+                        // Remove processing message
+                        if (processingMsg) {
+                            processingMsg.remove();
+                        }
+                        
+                        alert('❌ Failed to record attendance. Please try again.');
+                        
+                        // Restart scanner for retry
+                        setTimeout(() => {
+                            if (scanner) {
+                                Instascan.Camera.getCameras().then(cameras => {
+                                    if (cameras.length > 0) {
+                                        scanner.start(cameras[0]);
+                                    }
+                                });
+                            }
+                        }, 2000);
+                    });
+                    
+                } catch (e) {
+                    console.error('JavaScript error:', e);
+                    alert('❌ Error processing QR code. Please try again.');
+                    
+                    // Restart scanner
+                    setTimeout(() => {
+                        if (scanner) {
+                            Instascan.Camera.getCameras().then(cameras => {
+                                if (cameras.length > 0) {
+                                    scanner.start(cameras[0]);
+                                }
+                            });
+                        }
+                    }, 2000);
+                }
+            });
+        }
+
+        Instascan.Camera.getCameras()
+            .then(cameras => {
+                console.log('Available cameras:', cameras.length);
+                if (cameras.length > 0) {
+                    scanner.start(cameras[0]);
+                    console.log('Scanner started successfully');
+                } else {
+                    alert('❌ No cameras found. Please ensure camera permissions are granted.');
+                }
+            })
+            .catch(e => {
+                console.error('Camera error:', e);
+                alert('❌ Camera error: ' + e.message + '\n\nPlease ensure:\n1. Camera permissions are granted\n2. Camera is not being used by another application\n3. You are using HTTPS or localhost');
+            });
+
+    } else {
+        // Hide video and stop scanner
+        if (scanner) {
+            scanner.stop();
+            console.log('Scanner stopped');
+        }
+        videoContainer.style.display = 'none';
+    }
+}
+</script>
+
+<!-- QR Scanner Library -->
+<script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+
+<!-- Chart.js for Attendance Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== EVENT DETAIL PAGE LOADED ===');
+    
+    // Initialize Attendance Chart
+    const chartElement = document.getElementById('attendanceChart');
+    if (!chartElement) {
+        console.log('Chart element not found');
+        return;
+    }
+    
+    const ctx = chartElement.getContext('2d');
+    
+    try {
+        const presentCount = parseInt('{{ present_count|default:0 }}') || 0;
+        const lateCount = parseInt('{{ late_count|default:0 }}') || 0;
+        const absentCount = parseInt('{{ absent_count|default:0 }}') || 0;
+        
+        console.log('Chart data:', { presentCount, lateCount, absentCount });
+
+        if (isNaN(presentCount) || isNaN(lateCount) || isNaN(absentCount)) {
+            console.error('Invalid chart data');
+            return;
+        }
+
+        const attendanceChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Present', 'Late', 'Absent'],
+                datasets: [{
+                    label: 'Attendance',
+                    data: [presentCount, lateCount, absentCount],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',   // Green for Present
+                        'rgba(255, 193, 7, 0.8)',   // Yellow for Late
+                        'rgba(220, 53, 69, 0.8)'    // Red for Absent
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Attendance Distribution'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        console.log('Chart initialized successfully');
+    } catch (error) {
+        console.error('Error creating chart:', error);
+    }
+
+    // QR Code Generation
+    const generateQRButton = document.getElementById('generateQRCodes');
+    if (generateQRButton) {
+        generateQRButton.addEventListener('click', function() {
+            console.log('Generating QR codes for all members...');
+            
+            // Show loading state
+            generateQRButton.disabled = true;
+            generateQRButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Generating...';
+            
+            // Call the API
+            fetch('{% url "eqrApp:generate_event_qr" event.id %}')
+                .then(response => {
+                    console.log('QR generation response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('QR generation response:', data);
+                    if (data.success) {
+                        alert('✅ ' + data.message);
+                    } else {
+                        alert('❌ Error: ' + (data.error || data.message));
+                    }
+                })
+                .catch(error => {
+                    console.error('QR generation error:', error);
+                    alert('❌ Failed to generate QR codes. Please try again.');
+                })
+                .finally(() => {
+                    // Reset button
+                    generateQRButton.disabled = false;
+                    generateQRButton.innerHTML = '<i class="fas fa-qrcode me-1"></i> Generate QR Codes';
+                });
+        });
+    }
+    
+    console.log('Event detail page initialization complete');
+});
+</script>
+
+{% endblock %}

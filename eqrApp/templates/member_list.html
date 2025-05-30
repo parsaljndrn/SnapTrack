@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/member_list-design.css' %}?v={{now|date:'U'}}">
+{% endblock %}
+
+{% block content %}
+<div class="member-list-page">
+    <header class="ml-header">
+        <h1 class="ml-title">Member Directory</h1>
+        <div class="ml-buttons">
+            <a href="{% url 'eqrApp:add_member' %}" class="btn add-btn">
+                <span class="btn-icon"><i class="fa-solid fa-user-plus"></i></span> Add Member
+            </a>
+            <button id="massDeleteBtn" class="btn remove-btn" disabled>
+                <span class="btn-icon"><i class="fa-solid fa-trash"></i></span> Delete Selected
+            </button>
+        </div>
+    </header>
+
+    <div class="ml-sort" style="margin-top: 1rem;margin-bottom: 1rem;">
+        <form method="get" id="sortForm" class="d-inline">
+            <label for="sortSelect" class="form-label me-2">Sort by:</label>
+            <select name="sort" id="sortSelect" class="form-select d-inline w-auto" onchange="document.getElementById('sortForm').submit()">
+                <option value="name" {% if current_sort == 'name' %}selected{% endif %}>Name</option>
+                <option value="id" {% if current_sort == 'id' %}selected{% endif %}>ID</option>
+                <option value="section" {% if current_sort == 'section' %}selected{% endif %}>Section</option>
+            </select>
+        </form>
+    </div>
+
+    <div id="messageContainer"></div>
+
+    <div class="ml-card">
+        <form id="massDeleteForm">
+            {% csrf_token %}
+            <table class="ml-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" /></th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Section</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr data-member-id="{{ member.member_id }}">
+                        <td><input type="checkbox" name="member_ids" value="{{ member.member_id }}" class="member-checkbox" /></td>
+                        <td>{{ member.member_id }}</td>
+                        <td>{{ member.get_full_name }}</td>
+                        <td>{{ member.email|default:"—" }}</td>
+                        <td>{{ member.section|default:"—" }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'eqrApp:manage_member' member.member_id %}" class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit" style="color: #137FC3;"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-row">
+                            No members found. <a href="{% url 'eqrApp:add_member' %}">Add your first member</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.member-checkbox');
+    const massDeleteBtn = document.getElementById('massDeleteBtn');
+    const massDeleteForm = document.getElementById('massDeleteForm');
+    const messageContainer = document.getElementById('messageContainer');
+
+    selectAll.addEventListener('change', function () {
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      updateDeleteButtonState();
+    });
+
+    checkboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        updateDeleteButtonState();
+        selectAll.checked = [...checkboxes].every(c => c.checked);
+      });
+    });
+
+    function updateDeleteButtonState() {
+      const anyChecked = [...checkboxes].some(cb => cb.checked);
+      massDeleteBtn.disabled = !anyChecked;
+    }
+
+    function showMessage(message, type = 'success') {
+      messageContainer.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>`;
+      setTimeout(() => {
+        const alert = messageContainer.querySelector('.alert');
+        if (alert) {
+          const bsAlert = new bootstrap.Alert(alert);
+          bsAlert.close();
+        }
+      }, 5000);
+    }
+
+    massDeleteBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (!confirm('Are you sure you want to delete the selected members?')) return;
+
+      const formData = new FormData(massDeleteForm);
+      fetch("{% url 'eqrApp:mass_delete_members' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          document.querySelectorAll('.member-checkbox:checked').forEach(cb => {
+            cb.closest('tr').remove();
+          });
+          showMessage(data.message);
+        } else {
+          showMessage(data.message, 'danger');
+        }
+      })
+      .catch(error => {
+        showMessage('An error occurred while deleting members', 'danger');
+        console.error('Error:', error);
+      });
+    });
+  });
+</script>
+{% endblock %}
