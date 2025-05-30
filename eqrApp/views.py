@@ -282,9 +282,10 @@ def create_event(request):
 @login_required
 def event_detail(request, pk):
     event = get_object_or_404(Event, pk=pk)
+    
+    # Show ALL attendance records, not just present/late
     attendances = Attendance.objects.filter(
-        event=event, 
-        status__in=['present', 'late']
+        event=event
     ).select_related('member').order_by('-timestamp')
     
     total_members = Member.objects.count()
@@ -301,77 +302,147 @@ def event_detail(request, pk):
         if not scan_data:
             return HttpResponseBadRequest("No scan data provided")
         
+        print(f"=== QR SCAN DEBUG ===")
+        print(f"Raw scan data: {scan_data[:100]}...")
+        
         try:
-            # Try to decrypt the QR data first
-            decrypted_data = decrypt_qr_data(scan_data)
+            # First, try to decrypt encrypted QR data
+            if scan_data.startswith('EQR1:'):
+                print("Processing encrypted QR code...")
+                decrypted_data = decrypt_qr_data(scan_data)
+                
+                if decrypted_data:
+                    print(f"Decrypted data: {decrypted_data}")
+                    member_id = decrypted_data.get('member_id')
+                    event_id_from_qr = decrypted_data.get('event_id')
+                    
+                    if not member_id or not event_id_from_qr:
+                        return JsonResponse({
+                            'status': 'error', 
+                            'message': 'Incomplete QR code data'
+                        }, status=400)
+                    
+                    if int(event_id_from_qr) != event.id:
+                        return JsonResponse({
+                            'status': 'error', 
+                            'message': 'This QR code is for a different event'
+                        }, status=400)
+                    
+                    try:
+                        member = Member.objects.get(member_id=member_id)
+                        
+                        # Calculate status based on arrival time
+                        arrival_time = timezone.now()
+                        calculated_status = 'present'  # Default
+                        
+                        if event.start_time:
+                            from django.utils.timezone import make_aware
+                            from datetime import datetime
+                            
+                            # Create aware datetime for event start
+                            event_start = make_aware(datetime.combine(event.date, event.start_time))
+                            
+                            # Calculate time difference in minutes
+                            time_difference = (arrival_time - event_start).total_seconds() / 60
+                            
+                            if time_difference <= 10:  # On time or less than 10 mins late
+                                calculated_status = 'present'
+                            else:  # More than 10 mins late
+                                calculated_status = 'late'
+                        
+                        print(f"Calculated status: {calculated_status}")
+                        
+                        # Create or update attendance record with explicit status
+                        attendance, created = Attendance.objects.update_or_create(
+                            event=event,
+                            member=member,
+                            defaults={
+                                'status': calculated_status,
+                                'timestamp': arrival_time
+                            }
+                        )
+                        
+                        action = "registered" if created else "updated"
+                        print(f"Attendance {action} for {member.get_full_name()}: {attendance.status}")
+                        
+                        return JsonResponse({
+                            'status': 'success',
+                            'message': f'Attendance {action} for {member.get_full_name()} ({attendance.status})'
+                        })
+                        
+                    except Member.DoesNotExist:
+                        return JsonResponse({
+                            'status': 'error', 
+                            'message': 'Member not found in system'
+                        }, status=400)
+                else:
+                    print("Failed to decrypt QR code")
+                    return JsonResponse({
+                        'status': 'error', 
+                        'message': 'Invalid or corrupted QR code'
+                    }, status=400)
             
-            if decrypted_data:
-                # Handle encrypted QR data
-                member_id = decrypted_data.get('member_id')
-                event_id = decrypted_data.get('event_id')
-                
-                if not member_id or not event_id or int(event_id) != event.id:
-                    return JsonResponse({
-                        'status': 'error', 
-                        'message': 'Invalid or expired QR code for this event'
-                    }, status=400)
-                
-                try:
-                    member = Member.objects.get(member_id=member_id)
-                    attendance, created = Attendance.objects.update_or_create(
-                        event=event,
-                        member=member,
-                        defaults={
-                            'status': 'present',
-                            'timestamp': timezone.now()
-                        }
-                    )
-                    
-                    action = "registered" if created else "updated"
-                    return JsonResponse({
-                        'status': 'success',
-                        'message': f'Attendance {action} for {member.get_full_name()}'
-                    })
-                    
-                except Member.DoesNotExist:
-                    return JsonResponse({
-                        'status': 'error', 
-                        'message': 'Member not found'
-                    }, status=400)
+            # Fallback: try to handle legacy unencrypted JSON data
             else:
-                # Try to handle legacy unencrypted JSON data
+                print("Processing legacy JSON QR code...")
                 try:
                     qr_data = json.loads(scan_data)
                     member_id = qr_data.get('member_id')
-                    event_id = qr_data.get('event_id')
+                    event_id_from_qr = qr_data.get('event_id')
                     
-                    if not member_id or not event_id or int(event_id) != event.id:
+                    if not member_id or not event_id_from_qr or int(event_id_from_qr) != event.id:
                         return JsonResponse({
                             'status': 'error', 
                             'message': 'Invalid QR code for this event'
                         }, status=400)
                     
                     member = Member.objects.get(member_id=member_id)
+                    
+                    # Calculate status for legacy QR codes too
+                    arrival_time = timezone.now()
+                    calculated_status = 'present'
+                    
+                    if event.start_time:
+                        from django.utils.timezone import make_aware
+                        from datetime import datetime
+                        
+                        event_start = make_aware(datetime.combine(event.date, event.start_time))
+                        time_difference = (arrival_time - event_start).total_seconds() / 60
+                        
+                        if time_difference <= 10:
+                            calculated_status = 'present'
+                        else:
+                            calculated_status = 'late'
+                    
                     attendance, created = Attendance.objects.update_or_create(
                         event=event,
                         member=member,
                         defaults={
-                            'status': 'present',
-                            'timestamp': timezone.now()
+                            'status': calculated_status,
+                            'timestamp': arrival_time
                         }
                     )
-                    return JsonResponse({'status': 'success'})
                     
-                except (json.JSONDecodeError, Member.DoesNotExist):
+                    action = "registered" if created else "updated"
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': f'Attendance {action} for {member.get_full_name()} ({attendance.status})'
+                    })
+                    
+                except (json.JSONDecodeError, Member.DoesNotExist) as e:
+                    print(f"Legacy JSON processing failed: {e}")
                     return JsonResponse({
                         'status': 'error', 
                         'message': 'Invalid QR code format'
                     }, status=400)
                     
         except Exception as e:
+            print(f"QR processing error: {e}")
+            import traceback
+            traceback.print_exc()
             return JsonResponse({
                 'status': 'error', 
-                'message': 'Error processing QR code'
+                'message': 'Error processing QR code. Please try again.'
             }, status=500)
     
     return render(request, 'event_detail.html', {
@@ -582,8 +653,8 @@ def save_bulk_attendance(request, event_id):
                     
                     # Validate status
                     if status in ['present', 'absent', 'late']:
-                        # Update or create attendance record
-                        attendance, created = Attendance.objects.update_or_create(
+                        # Get or create attendance record
+                        attendance, created = Attendance.objects.get_or_create(
                             event=event,
                             member=member,
                             defaults={
@@ -591,6 +662,17 @@ def save_bulk_attendance(request, event_id):
                                 'timestamp': timezone.now()
                             }
                         )
+                        
+                        # If updating existing record, manually set status and save with skip flag
+                        if not created:
+                            attendance.status = status
+                            attendance.timestamp = timezone.now()
+                            attendance.save(skip_auto_calculation=True)  # SKIP AUTO-CALCULATION
+                        else:
+                            # For new records, save again with the correct status and skip flag
+                            attendance.status = status
+                            attendance.save(skip_auto_calculation=True)  # SKIP AUTO-CALCULATION
+                        
                         count_updated += 1
                         
                         # Debug logging
@@ -601,6 +683,9 @@ def save_bulk_attendance(request, event_id):
                         attendance.refresh_from_db()
                         print(f"Verified status in DB: {attendance.status}")
                         
+                        if attendance.status != status:
+                            print(f"⚠️  WARNING: Status mismatch! Expected: {status}, Got: {attendance.status}")
+                        
                     else:
                         error_msg = f"Invalid status '{status}' for member {member.member_id}"
                         print(error_msg)
@@ -608,7 +693,7 @@ def save_bulk_attendance(request, event_id):
                 else:
                     # If no radio button is selected, default to absent
                     print(f"No status found for {member.get_full_name()}, defaulting to absent")
-                    attendance, created = Attendance.objects.update_or_create(
+                    attendance, created = Attendance.objects.get_or_create(
                         event=event,
                         member=member,
                         defaults={
@@ -616,6 +701,15 @@ def save_bulk_attendance(request, event_id):
                             'timestamp': timezone.now()
                         }
                     )
+                    
+                    if not created:
+                        attendance.status = 'absent'
+                        attendance.timestamp = timezone.now()
+                        attendance.save(skip_auto_calculation=True)  # SKIP AUTO-CALCULATION
+                    else:
+                        attendance.status = 'absent'
+                        attendance.save(skip_auto_calculation=True)  # SKIP AUTO-CALCULATION
+                    
                     count_updated += 1
             
             print(f"=== BULK ATTENDANCE COMPLETE: Updated {count_updated} records ===")

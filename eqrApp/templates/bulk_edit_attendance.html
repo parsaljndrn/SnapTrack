@@ -64,7 +64,8 @@
                                                        name="status_{{ member.member_id }}" 
                                                        id="present_{{ member.member_id }}" 
                                                        value="present"
-                                                       {% if member.attendance_status == 'present' %}checked{% endif %}>
+                                                       {% if member.attendance_status == 'present' %}checked{% endif %}
+                                                       data-member-name="{{ member.get_full_name }}">
                                                 <label for="present_{{ member.member_id }}">Present</label>
                                             </div>
                                             
@@ -73,7 +74,8 @@
                                                        name="status_{{ member.member_id }}"
                                                        id="late_{{ member.member_id }}" 
                                                        value="late"
-                                                       {% if member.attendance_status == 'late' %}checked{% endif %}>
+                                                       {% if member.attendance_status == 'late' %}checked{% endif %}
+                                                       data-member-name="{{ member.get_full_name }}">
                                                 <label for="late_{{ member.member_id }}">Late</label>
                                             </div>
                                             
@@ -82,7 +84,8 @@
                                                        name="status_{{ member.member_id }}"
                                                        id="absent_{{ member.member_id }}" 
                                                        value="absent"
-                                                       {% if member.attendance_status == 'absent' %}checked{% endif %}>
+                                                       {% if member.attendance_status == 'absent' %}checked{% endif %}
+                                                       data-member-name="{{ member.get_full_name }}">
                                                 <label for="absent_{{ member.member_id }}">Absent</label>
                                             </div>
                                         </div>
@@ -127,21 +130,38 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log(`Late radios: ${lateRadios.length}`);
     console.log(`Absent radios: ${absentRadios.length}`);
     
+    // Log initial state
+    console.log('=== INITIAL RADIO BUTTON STATE ===');
+    allRadios.forEach(radio => {
+        if (radio.checked) {
+            console.log(`Initially checked: ${radio.name} = ${radio.value} (${radio.dataset.memberName})`);
+        }
+    });
+    
     // Set all present
     document.getElementById('setAllPresent').addEventListener('click', function() {
-        console.log('Setting all present');
+        console.log('=== SETTING ALL PRESENT ===');
         presentRadios.forEach((radio, index) => {
             radio.checked = true;
-            console.log(`Set present for: ${radio.name} = ${radio.value}`);
+            console.log(`Set present for: ${radio.dataset.memberName} (${radio.name})`);
         });
     });
     
-    // Set all absent - FIXED SELECTOR
+    // Set all absent
     document.getElementById('setAllAbsent').addEventListener('click', function() {
-        console.log('Setting all absent');
+        console.log('=== SETTING ALL ABSENT ===');
         absentRadios.forEach((radio, index) => {
             radio.checked = true;
-            console.log(`Set absent for: ${radio.name} = ${radio.value}`);
+            console.log(`Set absent for: ${radio.dataset.memberName} (${radio.name})`);
+        });
+    });
+    
+    // Debug: Log radio button changes
+    allRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                console.log(`Radio changed: ${this.dataset.memberName} -> ${this.value}`);
+            }
         });
     });
     
@@ -155,11 +175,15 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`Checked inputs: ${checkedInputs.length}`);
         
         // Log all form data
+        let statusCounts = { present: 0, late: 0, absent: 0 };
         for (let [key, value] of formData.entries()) {
             if (key.startsWith('status_')) {
                 console.log(`${key}: ${value}`);
+                statusCounts[value]++;
             }
         }
+        
+        console.log('Status distribution:', statusCounts);
         
         // Check for any unchecked members
         const memberRows = document.querySelectorAll('tr[data-member-id]');
@@ -169,29 +193,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const memberId = row.getAttribute('data-member-id');
             const checkedRadio = row.querySelector('input[type="radio"]:checked');
             if (!checkedRadio) {
-                console.log(`No selection for member: ${memberId}`);
+                console.log(`No selection for member ID: ${memberId}`);
                 unselectedCount++;
             }
         });
         
         if (unselectedCount > 0) {
-            const proceed = confirm(`${unselectedCount} member(s) have no status selected. They will be marked as absent. Continue?`);
-            if (!proceed) {
-                e.preventDefault();
-                return false;
-            }
+            console.log(`${unselectedCount} members have no status selected`);
         }
         
         console.log('Form submission proceeding...');
-    });
-    
-    // Debug: Log radio button changes
-    allRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.checked) {
-                console.log(`Radio changed: ${this.name} = ${this.value}`);
-            }
-        });
     });
 });
 </script>

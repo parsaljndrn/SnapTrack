@@ -195,12 +195,15 @@ class Attendance(models.Model):
         return f"{self.member} attended {self.event} at {self.timestamp}"
 
     def save(self, *args, **kwargs):
-        # Only auto-set status if it's not being manually set
-        # FIXED: Only auto-calculate for truly empty status, not manually set 'absent'
-        if not self.status:  # Only when status is None/empty, not when it's explicitly 'absent'
+        # Check if this is a manual/bulk edit (skip auto-calculation)
+        skip_auto_calculation = kwargs.pop('skip_auto_calculation', False)
+        
+        # Only auto-calculate status for QR scans, not manual edits
+        if not skip_auto_calculation and self.status == 'absent':
+            # This is likely a QR scan - auto-calculate based on time
             if self.event.start_time:
                 from django.utils.timezone import make_aware
-                from datetime import datetime, time
+                from datetime import datetime
                 
                 # Create aware datetime objects for comparison
                 event_date = self.event.date
@@ -216,8 +219,12 @@ class Attendance(models.Model):
                     self.status = 'present'
                 else:  # More than 10 mins late
                     self.status = 'late'
-            else:  # No start time specified, default to present
+                    
+                print(f"QR Scan - Auto-calculated status for {self.member}: {self.status} (diff: {time_difference:.1f}min)")
+            else:  # No start time specified, default to present for QR scans
                 self.status = 'present'
+        elif skip_auto_calculation:
+            print(f"Manual Edit - Preserving status for {self.member}: {self.status}")
         
         super().save(*args, **kwargs)
     
