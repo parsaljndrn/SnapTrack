@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+            <hr>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Members Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-users text-primary"></i> Members
+                    </h3>
+                    <p class="display-4">{{ members_count }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'eqrApp:member_list' %}" class="btn btn-primary">
+                            <i class="fas fa-list"></i> View All
+                        </a>
+                        <a href="{% url 'eqrApp:add_member' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-alt text-success"></i> Events
+                    </h3>
+                    <p class="display-4">{{ events_count }}</p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'eqrApp:event_list' %}" class="btn btn-success">
+                            <i class="fas fa-list"></i> View All
+                        </a>
+                        <a href="{% url 'eqrApp:create_event' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus"></i> Create New
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <i class="fas fa-history text-info"></i> Recent Activity
+                    </h3>
+                    <div class="list-group list-group-flush">
+                        {% for event in recent_events %}
+                        <a href="{% url 'eqrApp:event_detail' event.pk %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            {{ event.name }} - {{ event.date }}
+                        </a>
+                        {% empty %}
+                        <div class="list-group-item text-muted">No recent events</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

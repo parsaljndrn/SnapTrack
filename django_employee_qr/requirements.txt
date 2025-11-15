@@ -1,0 +1,5 @@
+Django
+Pillow
+django-qr-code
+cryptography
+qrcode
